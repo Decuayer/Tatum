@@ -9,7 +9,30 @@ import SwiftUI
 
 struct FeedView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationView {
+            ZStack {
+                Color("BackgroundDark")
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    LazyVStack(spacing: 30) {
+                        // Şimdilik 10 tane sahte post gösterelim
+                        ForEach(0..<10) { _ in
+                            FeedCall()
+                        }
+                    }
+                    .padding(.top)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Text("TATUM")
+                        .font(.custom("Poppins-Bold", size: 24))
+                        .foregroundColor(Color("BrandPurple"))
+                }
+            }
+        }
     }
 }
 

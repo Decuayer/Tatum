@@ -8,11 +8,29 @@
 import SwiftUI
 
 struct CustomSearchBar: View {
+    @Binding var text: String
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+            
+            TextField("Search tattoo, artist...", text: $text)
+                .foregroundColor(.white)
+                .accentColor(Color("BrandPurple"))
+            
+            if !text.isEmpty {
+                Button(action: {
+                    text = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+        .padding()
+        .background(Color("CardDark"))
+        .cornerRadius(12)
+        .padding(.horizontal)
     }
-}
-
-#Preview {
-    CustomSearchBar()
 }

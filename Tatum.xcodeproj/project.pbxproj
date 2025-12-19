@@ -6,13 +6,33 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A3D0A8A42EF4AE0F009DF402 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = A3D0A8A32EF4AE0F009DF402 /* SDWebImageSwiftUI */; };
+		A3D0A8C82EF4B3BA009DF402 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A3D0A8C72EF4B3BA009DF402 /* FirebaseCore */; };
+		A3D0A8D72EF4BB53009DF402 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = A3D0A8D62EF4BB53009DF402 /* FirebaseAuth */; };
+		A3D0A8DB2EF4BD1D009DF402 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A3D0A8DA2EF4BD1D009DF402 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
-		A3D0A88E2EF4AB85009DF402 /* Tatum.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tatum.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A3D0A8B42EF4B089009DF402 /* Tatum.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tatum.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A3D0A8B62EF4B091009DF402 /* Exceptions for "Tatum" folder in "Tatum" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A3D0A88D2EF4AB85009DF402 /* Tatum */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A3D0A8902EF4AB85009DF402 /* Tatum */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A3D0A8B62EF4B091009DF402 /* Exceptions for "Tatum" folder in "Tatum" target */,
+			);
 			path = Tatum;
 			sourceTree = "<group>";
 		};
@@ -23,6 +43,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A3D0A8C82EF4B3BA009DF402 /* FirebaseCore in Frameworks */,
+				A3D0A8DB2EF4BD1D009DF402 /* FirebaseFirestore in Frameworks */,
+				A3D0A8D72EF4BB53009DF402 /* FirebaseAuth in Frameworks */,
+				A3D0A8A42EF4AE0F009DF402 /* SDWebImageSwiftUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,16 +57,16 @@
 			isa = PBXGroup;
 			children = (
 				A3D0A8902EF4AB85009DF402 /* Tatum */,
-				A3D0A88F2EF4AB85009DF402 /* Products */,
+				A3D0A8B42EF4B089009DF402 /* Tatum.app */,
+				A3D0A8C62EF4B3BA009DF402 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
-		A3D0A88F2EF4AB85009DF402 /* Products */ = {
+		A3D0A8C62EF4B3BA009DF402 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				A3D0A88E2EF4AB85009DF402 /* Tatum.app */,
 			);
-			name = Products;
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -65,9 +89,13 @@
 			);
 			name = Tatum;
 			packageProductDependencies = (
+				A3D0A8A32EF4AE0F009DF402 /* SDWebImageSwiftUI */,
+				A3D0A8C72EF4B3BA009DF402 /* FirebaseCore */,
+				A3D0A8D62EF4BB53009DF402 /* FirebaseAuth */,
+				A3D0A8DA2EF4BD1D009DF402 /* FirebaseFirestore */,
 			);
 			productName = Tatum;
-			productReference = A3D0A88E2EF4AB85009DF402 /* Tatum.app */;
+			productReference = A3D0A8B42EF4B089009DF402 /* Tatum.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -94,8 +122,12 @@
 			);
 			mainGroup = A3D0A8852EF4AB84009DF402;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A3D0A8A12EF4ADA4009DF402 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				A3D0A8A22EF4AE0F009DF402 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
+			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = A3D0A88F2EF4AB85009DF402 /* Products */;
+			productRefGroup = A3D0A8852EF4AB84009DF402;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -256,6 +288,7 @@
 				DEVELOPMENT_TEAM = YJD5V9L5W4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Tatum/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +321,7 @@
 				DEVELOPMENT_TEAM = YJD5V9L5W4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Tatum/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -332,6 +366,48 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A3D0A8A12EF4ADA4009DF402 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.7.0;
+			};
+		};
+		A3D0A8A22EF4AE0F009DF402 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImageSwiftUI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A3D0A8A32EF4AE0F009DF402 /* SDWebImageSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A3D0A8A22EF4AE0F009DF402 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;
+			productName = SDWebImageSwiftUI;
+		};
+		A3D0A8C72EF4B3BA009DF402 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A3D0A8A12EF4ADA4009DF402 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		A3D0A8D62EF4BB53009DF402 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A3D0A8A12EF4ADA4009DF402 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		A3D0A8DA2EF4BD1D009DF402 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A3D0A8A12EF4ADA4009DF402 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A3D0A8862EF4AB84009DF402 /* Project object */;
 }
