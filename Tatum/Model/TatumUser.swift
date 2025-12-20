@@ -8,28 +8,35 @@
 import Foundation
 
 struct TatumUser: Identifiable, Codable {
-    let id: String // Firebase Auth ID
+    let id: String
     let email: String
     let username: String
     var fullName: String
     var profileImageUrl: String?
-    var role: String // 'member', 'artist', 'owner'
+    var role: String
     var bio: String?
+    
+    // YENİ EKLENEN DETAYLI ALANLAR
+    var website: String?
+    var phoneNumber: String?
+    
     var followersCount: Int
     var followingCount: Int
     
+    // Varsayılan init (Mock Data için)
     static var mockUser: TatumUser {
         return TatumUser(
             id: "123",
             email: "test@tatum.com",
-            username: "Decu",
-            fullName: "Demir Cücü",
+            username: "polenaktar",
+            fullName: "Polen Aktar",
             profileImageUrl: nil,
             role: "member",
-            bio: "Tattoo lover",
-            followersCount: 0,
-            followingCount: 0
+            bio: "Tattoo enthusiast & art lover.",
+            website: "www.tatum.app",
+            phoneNumber: "+90 555 123 45 67",
+            followersCount: 150,
+            followingCount: 85
         )
     }
-    
 }

@@ -34,7 +34,7 @@ struct FeedCall: View {
             .padding(.bottom, 4)
             
             // 2. Orta Kısım: Dövme Fotoğraf
-            Image("TestTattoo") // Placeholder (Sonra SDWebImage ile URL'den çekeceğiz)
+            Image("TestTattoo1") // Placeholder (Sonra SDWebImage ile URL'den çekeceğiz)
                 .resizable()
                 .scaledToFill()
                 .frame(height: 400)

@@ -55,7 +55,7 @@ struct ExploreView: View {
                             // Şimdilik 20 tane rastgele görsel koyuyoruz
                             ForEach(0..<20, id: \.self) { index in
                                 NavigationLink(destination: Text("Detail View for Image \(index)")) {
-                                    ExploreGridItem(imageName: "TestTattoo")
+                                    ExploreGridItem(imageName: "TestTattoo1")
                                 }
                             }
                         }
