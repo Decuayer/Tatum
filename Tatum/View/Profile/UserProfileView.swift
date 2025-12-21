@@ -98,12 +98,11 @@ extension UserProfileView {
                         .frame(width: 80, height: 80)
                 }
                 
-                // İstatistikler (ViewModel'den geliyor)
                 HStack(spacing: 24) {
-                    UserStatView(value: viewModel.user.followersCount, title: "Followers")
-                    UserStatView(value: viewModel.user.followingCount, title: "Following")
+                    UserStatView(value: viewModel.followersCount, title: "Followers")
+                    UserStatView(value: viewModel.followingCount, title: "Following")
                     if viewModel.user.role == "artist" {
-                         UserStatView(value: viewModel.posts.count, title: "Posts")
+                        UserStatView(value: viewModel.posts.count, title: "Posts")
                     }
                 }
             }
@@ -178,10 +177,7 @@ extension UserProfileView {
             .animation(.easeInOut, value: viewModel.isFollowed) // Renk değişimi yumuşak olsun
             
             // 2. MESAJ BUTONU
-            Button(action: {
-                // Chat sayfasına yönlendirme yapılacak
-                print("Open Chat")
-            }) {
+            NavigationLink(destination: ChatView(user: viewModel.user)) {
                 Text("Message")
                     .font(.custom("Poppins-SemiBold", size: 14))
                     .foregroundColor(.white)

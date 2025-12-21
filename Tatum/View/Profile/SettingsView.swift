@@ -57,29 +57,44 @@ struct SettingsView: View {
                         }
                         
                         Spacer().frame(height: 20)
-                        
-                        
+                                                
                         // --- DEVELOPER AREA (TEST İÇİN) ---
-                        Button(action: {
-                            // Test verisi oluştur
-                            TestDataManager.shared.createTestUsers { message, addedFollowers, addedFollowing in
-                                print(message) // Konsola bilgi bas
-                                
-                                // ANLIK GÜNCELLEME SİHRİ BURADA:
-                                // Eğer veritabanına yeni bir şey eklendiyse, AuthViewModel'deki currentUser'ı güncelle.
-                                if addedFollowers > 0 || addedFollowing > 0 {
-                                    if var user = authViewModel.currentUser {
-                                        user.followersCount += addedFollowers
-                                        user.followingCount += addedFollowing
-                                        authViewModel.currentUser = user // Bu tetikleme View'ı yeniler
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Developer Zone")
+                                .font(.custom("Poppins-SemiBold", size: 12))
+                                .foregroundColor(.gray)
+                                .padding(.leading, 4)
+                            
+                            // 1. BUTON: Test Verisi Ekle (Mevcut)
+                            Button(action: {
+                                TestDataManager.shared.createTestUsers { message, addedFollowers, addedFollowing in
+                                    print(message)
+                                    if addedFollowers > 0 || addedFollowing > 0 {
+                                        if var user = authViewModel.currentUser {
+                                            user.followersCount += addedFollowers
+                                            user.followingCount += addedFollowing
+                                            authViewModel.currentUser = user
+                                        }
                                     }
                                 }
+                            }) {
+                                SettingsRow(icon: "hammer.fill", title: "Add Test Data (Seed)", color: .yellow)
                             }
-                        }) {
-                            SettingsRow(icon: "hammer.fill", title: "Add Test Data (Auto Update)", color: .yellow)
-                                .cornerRadius(16)
-
+                            
+                            // 2. YENİ BUTON: Kullanıcı Veritabanı (User Database)
+                            Button(action: {
+                                // Sheet'i açmak için State değişkeni lazım ama
+                                // SettingsView içinde NavigationLink ile gitmek daha temiz olabilir.
+                                // Ya da basitçe 'showDatabase' diye bir @State ekleyip sheet açabiliriz.
+                            }) {
+                                // Not: Button içinde NavigationLink çalışmaz, doğrudan NavigationLink koyuyoruz:
+                                NavigationLink(destination: AllUsersListView()) {
+                                    SettingsRow(icon: "server.rack", title: "User Database Manager", color: .purple)
+                                }
+                            }
                         }
+                        .padding(.bottom, 20)
                         
                         Spacer().frame(height: 20)
                         

@@ -3,29 +3,32 @@ import FirebaseAuth
 import FirebaseFirestore
 import Combine
 
-//MARK: - Protocol
 protocol AuthServiceProtocol {
     var userSessionPublisher: CurrentValueSubject<String?, Never> { get }
-    
     func login(withEmail email: String, password: String, completion: @escaping (Bool, String?) -> Void)
     func register(withEmail email: String, password: String, fullname: String, username: String, completion: @escaping (Bool, String?) -> Void)
     func signOut()
     func fetchUser(uid: String, completion: @escaping (TatumUser?) -> Void)
 }
 
-//MARK: - Class
 class AuthService: AuthServiceProtocol {
     
-    // User Session Functions
     let userSessionPublisher = CurrentValueSubject<String?, Never>(nil)
     
+    private var authStateHandle: AuthStateDidChangeListenerHandle?
+    
     init() {
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             self?.userSessionPublisher.send(user?.uid)
         }
     }
     
-    // Login function
+    deinit {
+        if let handle = authStateHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
+        }
+    }
+    
     func login(withEmail email: String, password: String, completion: @escaping (Bool, String?) -> Void) {
         Auth.auth().signIn(withEmail: email, password: password) { result, error in
             if let error = error {
@@ -36,7 +39,6 @@ class AuthService: AuthServiceProtocol {
         }
     }
     
-    // Register function
     func register(withEmail email: String, password: String, fullname: String, username: String, completion: @escaping (Bool, String?) -> Void) {
         Auth.auth().createUser(withEmail: email, password: password) { result, error in
             if let error = error {
@@ -46,15 +48,13 @@ class AuthService: AuthServiceProtocol {
             
             guard let uid = result?.user.uid else { return }
             
-            // Veritabanına yazılacak ilk veriler
+            // DİKKAT: Artık followersCount ve followingCount kaydetmiyoruz!
             let data: [String: Any] = [
                 "uid": uid,
                 "email": email,
                 "username": username,
                 "fullName": fullname,
                 "role": "member",
-                "followersCount": 0,
-                "followingCount": 0,
                 "createdAt": Timestamp(date: Date()),
                 "website": "",
                 "phoneNumber": "",
@@ -67,36 +67,50 @@ class AuthService: AuthServiceProtocol {
         }
     }
     
-    // Log Out function
     func signOut() {
         try? Auth.auth().signOut()
     }
     
-    // Fetch User Information
+    // MARK: - FETCH USER (AGGREGATION ILE)
     func fetchUser(uid: String, completion: @escaping (TatumUser?) -> Void) {
-        Firestore.firestore().collection("users").document(uid).getDocument { snapshot, error in
+        let db = Firestore.firestore()
+        let userRef = db.collection("users").document(uid)
+        
+        // 1. Kullanıcı Dokümanını Çek
+        userRef.getDocument { snapshot, error in
             guard let data = snapshot?.data(), error == nil else {
                 completion(nil)
                 return
             }
             
-            // Veriyi Modele Dönüştürme (Mapping)
-            let user = TatumUser(
-                id: data["uid"] as? String ?? "",
-                email: data["email"] as? String ?? "",
-                username: data["username"] as? String ?? "",
-                fullName: data["fullName"] as? String ?? "",
-                profileImageUrl: data["profileImageUrl"] as? String,
-                role: data["role"] as? String ?? "member",
-                bio: data["bio"] as? String,
-                // YENİ ALANLAR:
-                website: data["website"] as? String,
-                phoneNumber: data["phoneNumber"] as? String,
-                // TAKİPÇİ SAYAÇLARI:
-                followersCount: data["followersCount"] as? Int ?? 0,
-                followingCount: data["followingCount"] as? Int ?? 0
-            )
-            completion(user)
+            // Temel verilerle User oluştur (Sayılar henüz 0)
+            var user = TatumUser(data: data)
+            
+            // 2. Sayıları Hesapla (Parallel Execution)
+            let group = DispatchGroup()
+            
+            // A) Followers Sayısı
+            group.enter()
+            userRef.collection("user-followers").count.getAggregation(source: .server) { snapshot, error in
+                if let count = snapshot?.count {
+                    user.followersCount = Int(truncating: count)
+                }
+                group.leave()
+            }
+            
+            // B) Following Sayısı
+            group.enter()
+            userRef.collection("user-following").count.getAggregation(source: .server) { snapshot, error in
+                if let count = snapshot?.count {
+                    user.followingCount = Int(truncating: count)
+                }
+                group.leave()
+            }
+            
+            // Hepsi bitince User'ı döndür
+            group.notify(queue: .main) {
+                completion(user)
+            }
         }
     }
 }

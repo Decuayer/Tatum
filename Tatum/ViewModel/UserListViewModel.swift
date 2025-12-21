@@ -8,7 +8,6 @@
 import Foundation
 import Combine
 
-// Listenin ne türde olduğunu belirten enum
 enum UserListType {
     case followers
     case following
@@ -18,7 +17,7 @@ class UserListViewModel: ObservableObject {
     @Published var users: [TatumUser] = []
     
     private let service: ProfileServiceProtocol
-    let listType: UserListType // Dışarıdan okunabilsin diye private kaldırdık
+    let listType: UserListType
     private let uid: String
     
     init(uid: String, type: UserListType, service: ProfileServiceProtocol = ProfileService()) {
@@ -41,14 +40,18 @@ class UserListViewModel: ObservableObject {
         }
     }
     
-    // LİSTEDEN ÇIKARMA İŞLEMİ
     func performAction(for user: TatumUser, completion: @escaping (Bool) -> Void) {
+        // UI'dan hemen silmek için completion'ı beklemeden success dönebiliriz (Optimistic)
+        // Ama veri tutarlılığı için servisi beklemek daha güvenli.
+        
         if listType == .followers {
             // Beni takip edeni çıkar
             service.removeFollower(uid: user.id) { [weak self] error in
                 if error == nil {
                     self?.removeUserFromList(id: user.id)
-                    completion(true) // Başarılı
+                    completion(true)
+                } else {
+                    completion(false)
                 }
             }
         } else {
@@ -56,7 +59,9 @@ class UserListViewModel: ObservableObject {
             service.unfollow(uid: user.id) { [weak self] error in
                 if error == nil {
                     self?.removeUserFromList(id: user.id)
-                    completion(true) // Başarılı
+                    completion(true)
+                } else {
+                    completion(false)
                 }
             }
         }

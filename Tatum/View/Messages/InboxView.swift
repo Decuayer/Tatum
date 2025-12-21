@@ -1,13 +1,11 @@
-//
-//  InboxView.swift
-//  Tatum
-//
-//  Created by Demir Cücü on 21.12.2025.
-//
-
 import SwiftUI
+import SDWebImageSwiftUI
 
 struct InboxView: View {
+    @StateObject var viewModel = InboxViewModel()
+    @State private var showChat = false
+    @State private var selectedUser: TatumUser? // Navigasyon için
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -20,13 +18,33 @@ struct InboxView: View {
                         .padding(.horizontal)
                         .padding(.top, 20)
                     
-                    ScrollView {
-                        VStack(spacing: 1) {
-                            ForEach(0..<5) { _ in
-                                NavigationLink(destination: ChatView()) {
-                                    InboxRow() // Aşağıda tanımlı
+                    if viewModel.recentMessages.isEmpty {
+                        Text("No messages yet.")
+                            .foregroundColor(.gray)
+                            .padding()
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 1) {
+                                ForEach(viewModel.recentMessages) { recent in
+                                    // Tıklanınca o kullanıcıya ait ChatView'i açacağız
+                                    // Not: RecentMessage içinde User objesi tam yok,
+                                    // Basitlik için burada User objesini 'recent' verisinden oluşturuyoruz.
+                                    // Daha sağlam yapı için ID ile fetch yapılabilir ama şimdilik bu yeterli.
+                                    
+                                    let targetUser = TatumUser(
+                                        id: recent.id ?? "",
+                                        email: "", // Bilinmiyor, gerek yok
+                                        username: recent.username,
+                                        fullName: recent.username, // Inbox'ta görünen isim
+                                        profileImageUrl: recent.profileImageUrl,
+                                        role: "member", bio: nil, website: nil, phoneNumber: nil, followersCount: 0, followingCount: 0
+                                    )
+                                    
+                                    NavigationLink(destination: ChatView(user: targetUser)) {
+                                        InboxRow(recent: recent)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -37,33 +55,45 @@ struct InboxView: View {
     }
 }
 
+// SATIR TASARIMI
 struct InboxRow: View {
+    let recent: RecentMessage
+    
     var body: some View {
         HStack(spacing: 16) {
-            Image("decu")
-                .resizable()
-                .scaledToFill()
-                .frame(width: 56, height: 56)
-                .clipShape(Circle())
+            // Profil Fotosu
+            if let imgUrl = recent.profileImageUrl, !imgUrl.isEmpty {
+                WebImage(url: URL(string: imgUrl))
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 56, height: 56)
+                    .clipShape(Circle())
+            } else {
+                Image(systemName: "person.circle.fill")
+                    .resizable()
+                    .foregroundColor(.gray)
+                    .frame(width: 56, height: 56)
+            }
             
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text("Factor Tattoo")
+                    Text(recent.username)
                         .font(.custom("Poppins-SemiBold", size: 16))
                         .foregroundColor(.white)
                     Spacer()
-                    Text("14:30")
+                    // Zaman Formatı
+                    Text(recent.timestamp.formatted(.dateTime.hour().minute()))
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
                 
-                Text("Harika fikir. Örnek bir görselin var mı?")
+                Text(recent.text)
                     .font(.custom("Poppins-Regular", size: 14))
                     .foregroundColor(.gray)
                     .lineLimit(1)
             }
         }
         .padding()
-        .background(Color("BackgroundDark")) // Tıklama efekti için arka plan
+        .background(Color("BackgroundDark"))
     }
 }

@@ -61,15 +61,15 @@ struct UserListView: View {
     func handleAction(for user: TatumUser) {
         viewModel.performAction(for: user) { success in
             if success {
-                // İşlem başarılıysa AuthViewModel'deki sayıları güncelle (Canlılık hissi için)
-                if var currentUser = authViewModel.currentUser {
-                    if viewModel.listType == .followers {
-                        currentUser.followersCount -= 1
-                    } else {
-                        currentUser.followingCount -= 1
+                DispatchQueue.main.async {
+                    if var currentUser = authViewModel.currentUser {
+                        if viewModel.listType == .followers {
+                            currentUser.followersCount = max(0, currentUser.followersCount - 1)
+                        } else {
+                            currentUser.followingCount = max(0, currentUser.followingCount - 1)
+                        }
+                        authViewModel.currentUser = currentUser
                     }
-                    // AuthViewModel'i güncelle ki Profil sayfası yenilensin
-                    authViewModel.currentUser = currentUser
                 }
             }
         }
@@ -80,7 +80,7 @@ struct UserListView: View {
 struct UserRow: View {
     let user: TatumUser
     let listType: UserListType
-    var onAction: () -> Void // Butona basıldığını yukarı bildirmek için
+    var onAction: () -> Void
     
     var body: some View {
         HStack(spacing: 12) {
@@ -114,7 +114,7 @@ struct UserRow: View {
             
             // AKILLI BUTON
             Button(action: {
-                onAction() // UserListView içindeki fonksiyonu tetikler
+                onAction()
             }) {
                 Text(listType == .followers ? "Remove" : "Unfollow")
                     .font(.caption)

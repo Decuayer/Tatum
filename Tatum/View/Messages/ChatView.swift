@@ -1,57 +1,52 @@
-//
-//  ChatView.swift
-//  Tatum
-//
-//  Created by Demir Cücü on 21.12.2025.
-//
-
 import SwiftUI
+import SDWebImageSwiftUI
+import FirebaseAuth
 
 struct ChatView: View {
+    @EnvironmentObject var authViewModel: AuthViewModel
     
-    @StateObject var viewModel = ChatViewModel()
+    @StateObject var viewModel: ChatViewModel
     @Environment(\.dismiss) var dismiss
-    
-    // Klavyeyi yönetmek için
     @FocusState private var isFocused: Bool
+    
+    init(user: TatumUser) {
+        _viewModel = StateObject(wrappedValue: ChatViewModel(user: user))
+    }
     
     var body: some View {
         VStack(spacing: 0) {
-            // 1. HEADER (Kişi Bilgisi)
             headerView
             
-            // 2. MESAJ LİSTESİ
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         ForEach(viewModel.messages) { message in
                             ChatBubble(
                                 message: message,
-                                isFromCurrentUser: message.fromId == "currentUser"
+                                isFromCurrentUser: message.isFromCurrentUser(currentUid: Auth.auth().currentUser?.uid ?? "")
                             )
                         }
                     }
                     .padding(.top)
+                    .id("Bottom")
                 }
-                // Mesaj eklenince en alta kaydır
-                .onChange(of: viewModel.messages.count) { oldValue, newValue in
-                    if let lastId = viewModel.messages.last?.id {
+                .onChange(of: viewModel.messages.count) { _, _ in
+                    if (viewModel.messages.last?.id) != nil {
                         withAnimation {
-                            proxy.scrollTo(lastId, anchor: .bottom)
+                            proxy.scrollTo("Bottom", anchor: .bottom)
                         }
                     }
                 }
+                .onAppear {
+                    proxy.scrollTo("Bottom", anchor: .bottom)
+                }
             }
             
-            // 3. INPUT ALANI
             inputBar
         }
         .background(Color("BackgroundDark").ignoresSafeArea())
         .navigationBarHidden(true)
     }
-}
-
-extension ChatView {
     
     private var headerView: some View {
         HStack(spacing: 12) {
@@ -61,26 +56,25 @@ extension ChatView {
                     .padding(8)
             }
             
-            Image("welcome_img_1") // Profil fotosu
-                .resizable()
-                .scaledToFill()
-                .frame(width: 40, height: 40)
-                .clipShape(Circle())
+            if let img = viewModel.toUser.profileImageUrl, !img.isEmpty {
+                WebImage(url: URL(string: img))
+                    .resizable().scaledToFill()
+                    .frame(width: 40, height: 40).clipShape(Circle())
+            } else {
+                Image(systemName: "person.circle.fill")
+                    .resizable().foregroundColor(.gray)
+                    .frame(width: 40, height: 40)
+            }
             
             VStack(alignment: .leading) {
-                Text("Factor Tattoo")
+                Text(viewModel.toUser.username) // Dinamik İsim
                     .font(.custom("Poppins-Bold", size: 16))
                     .foregroundColor(.white)
                 Text("Online")
                     .font(.caption)
                     .foregroundColor(.green)
             }
-            
             Spacer()
-            
-            Image(systemName: "phone.fill")
-                .foregroundColor(.gray)
-                .padding(.trailing, 10)
         }
         .padding()
         .background(Color("CardDark"))
@@ -97,8 +91,12 @@ extension ChatView {
                 .focused($isFocused)
             
             Button(action: {
-                viewModel.sendMessage()
-                isFocused = false // Klavye kapansın istersen
+                if let currentUser = authViewModel.currentUser {
+                    viewModel.sendMessage(currentUser: currentUser)
+                    isFocused = false
+                } else {
+                    print("Hata: Current User bulunamadı, mesaj gönderilemiyor.")
+                }
             }) {
                 Image(systemName: "paperplane.fill")
                     .font(.system(size: 20))

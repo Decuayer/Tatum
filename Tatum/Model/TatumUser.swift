@@ -1,11 +1,5 @@
-//
-//  TatumUser.swift
-//  Tatum
-//
-//  Created by Demir Cücü on 19.12.2025.
-//
-
 import Foundation
+import FirebaseFirestore
 
 struct TatumUser: Identifiable, Codable {
     let id: String
@@ -15,28 +9,36 @@ struct TatumUser: Identifiable, Codable {
     var profileImageUrl: String?
     var role: String
     var bio: String?
-    
-    // YENİ EKLENEN DETAYLI ALANLAR
     var website: String?
     var phoneNumber: String?
     
-    var followersCount: Int
-    var followingCount: Int
+
+    var followersCount: Int = 0
+    var followingCount: Int = 0
     
-    // Varsayılan init (Mock Data için)
-    static var mockUser: TatumUser {
-        return TatumUser(
-            id: "123",
-            email: "test@tatum.com",
-            username: "polenaktar",
-            fullName: "Polen Aktar",
-            profileImageUrl: nil,
-            role: "member",
-            bio: "Tattoo enthusiast & art lover.",
-            website: "www.tatum.app",
-            phoneNumber: "+90 555 123 45 67",
-            followersCount: 150,
-            followingCount: 85
-        )
+    init(data: [String: Any]) {
+        self.id = data["uid"] as? String ?? ""
+        self.email = data["email"] as? String ?? ""
+        self.username = data["username"] as? String ?? ""
+        self.fullName = data["fullName"] as? String ?? ""
+        self.profileImageUrl = data["profileImageUrl"] as? String
+        self.role = data["role"] as? String ?? "member"
+        self.bio = data["bio"] as? String
+        self.website = data["website"] as? String
+        self.phoneNumber = data["phoneNumber"] as? String
+    }
+    
+    init(id: String, email: String, username: String, fullName: String, profileImageUrl: String?, role: String, bio: String?, website: String?, phoneNumber: String?, followersCount: Int, followingCount: Int) {
+        self.id = id
+        self.email = email
+        self.username = username
+        self.fullName = fullName
+        self.profileImageUrl = profileImageUrl
+        self.role = role
+        self.bio = bio
+        self.website = website
+        self.phoneNumber = phoneNumber
+        self.followersCount = followersCount
+        self.followingCount = followingCount
     }
 }

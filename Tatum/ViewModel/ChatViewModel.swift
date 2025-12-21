@@ -1,47 +1,29 @@
-//
-//  ChatViewModel.swift
-//  Tatum
-//
-//  Created by Demir Cücü on 21.12.2025.
-//
-
 import Foundation
 import Combine
+import FirebaseAuth
 
 class ChatViewModel: ObservableObject {
     @Published var messages: [Message] = []
-    @Published var messageText: String = "" // Input alanındaki yazı
+    @Published var messageText: String = ""
     
+    let toUser: TatumUser
     private let service: ChatServiceProtocol
     
-    init(service: ChatServiceProtocol = ChatService()) {
+    init(user: TatumUser, service: ChatServiceProtocol = ChatService()) {
+        self.toUser = user
         self.service = service
-        fetchMessages()
+        observeChat()
     }
     
-    func fetchMessages() {
-        service.fetchMessages { [weak self] messages in
+    func observeChat() {
+        service.observeMessages(chatPartnerId: toUser.id) { [weak self] messages in
             self?.messages = messages
         }
     }
     
-    func sendMessage() {
+    func sendMessage(currentUser: TatumUser) {
         guard !messageText.isEmpty else { return }
-        
-        // UI'da hemen göstermek için geçici ekleme (Optimistic Update)
-        let newMessage = Message(
-            id: UUID().uuidString,
-            fromId: "currentUser",
-            toId: "otherUser",
-            text: messageText,
-            timestamp: Date() 
-        )
-        messages.append(newMessage)
-        
-        // Servise Gönder
-        service.sendMessage(text: messageText)
-        
-        // Input'u temizle
+        service.sendMessage(text: messageText, currentUser: currentUser, toUser: toUser)
         messageText = ""
     }
 }
