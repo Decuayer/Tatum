@@ -3,16 +3,16 @@ import SDWebImageSwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    // ViewModel'i init içinde oluşturacağız (Kullanıcı verisi geldiğinde)
     @StateObject var viewModel: ProfileViewModel
-    
+        
     @State private var selectedTab = "Likes"
     @State private var showSettings = false
     @State private var showEditProfile = false
     
-    // Init: Kullanıcı verisini alıp ViewModel'e veriyoruz
     init(user: TatumUser) {
         _viewModel = StateObject(wrappedValue: ProfileViewModel(user: user))
+        _selectedTab = State(initialValue: user.role == "artist" ? "Portfolio" : "Likes")
+
     }
     
     var body: some View {
@@ -48,6 +48,16 @@ struct ProfileView: View {
             .sheet(isPresented: $showEditProfile) {
                 EditProfileView()
             }
+            .onAppear {
+                print("🔄 ProfileView göründü, veriler yenileniyor...")
+                
+                viewModel.fetchUserPosts()
+                viewModel.fetchLikedPosts()
+                
+                if let uid = authViewModel.currentUser?.id {
+                    authViewModel.fetchUser(uid: uid)
+                }
+            }
         }
     }
 }
@@ -58,7 +68,6 @@ extension ProfileView {
     // Header
     private var headerView: some View {
         VStack(spacing: 16) {
-            // Üst Bar (Ayarlar İkonu)
             HStack {
                 Text(authViewModel.currentUser?.username ?? "Profile")
                     .font(.custom("Poppins-Bold", size: 20))
@@ -77,7 +86,6 @@ extension ProfileView {
             
             // Profil Fotosu ve Stats
             HStack(spacing: 24) {
-                // Fotoğraf
                 if let imageUrl = authViewModel.currentUser?.profileImageUrl, !imageUrl.isEmpty {
                     WebImage(url: URL(string: imageUrl))
                         .resizable()
@@ -92,19 +100,16 @@ extension ProfileView {
                         .frame(width: 80, height: 80)
                 }
                 
-                // İSTATİSTİKLER (GÜNCELLENDİ - Tıklanabilir Oldu)
                 HStack(spacing: 24) {
                     // Followers
                     NavigationLink(destination: UserListView(uid: authViewModel.currentUser?.id ?? "", type: .followers, title: "Followers").navigationBarHidden(true)) {
                         UserStatView(value: authViewModel.currentUser?.followersCount ?? 0, title: "Followers")
                     }
                     
-                    // Following
                     NavigationLink(destination: UserListView(uid: authViewModel.currentUser?.id ?? "", type: .following, title: "Following").navigationBarHidden(true)) {
                         UserStatView(value: authViewModel.currentUser?.followingCount ?? 0, title: "Following")
                     }
                     
-                    // Posts (Tıklanabilir değil)
                     if authViewModel.currentUser?.role == "artist" {
                         UserStatView(value: viewModel.userPosts.count, title: "Posts")
                     }
@@ -112,13 +117,18 @@ extension ProfileView {
             }
             .padding(.horizontal)
             
-            // İsim, Bio ve EKSTRA BİLGİLER (GÜNCELLENDİ)
             VStack(alignment: .leading, spacing: 6) {
-                Text(authViewModel.currentUser?.fullName ?? "")
-                    .font(.custom("Poppins-SemiBold", size: 16))
-                    .foregroundColor(.white)
-                
-                // Bio
+                HStack {
+                    Text(viewModel.user.fullName)
+                        .font(.custom("Poppins-SemiBold", size: 18))
+                        .foregroundColor(.white)
+                    
+                    if viewModel.user.role == "artist" {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundColor(Color("BrandPurple"))
+                            .font(.caption)
+                    }
+                }
                 if let bio = authViewModel.currentUser?.bio, !bio.isEmpty {
                     Text(bio)
                         .font(.custom("Poppins-Regular", size: 14))
@@ -126,7 +136,6 @@ extension ProfileView {
                         .lineLimit(3)
                 }
                 
-                // Web Sitesi Linki
                 if let website = authViewModel.currentUser?.website, !website.isEmpty {
                     Link(destination: URL(string: website.hasPrefix("http") ? website : "https://\(website)") ?? URL(string: "https://google.com")!) {
                         HStack(spacing: 4) {
@@ -138,7 +147,6 @@ extension ProfileView {
                     }
                 }
                 
-                // Telefon Numarası
                 if let phone = authViewModel.currentUser?.phoneNumber, !phone.isEmpty {
                     HStack(spacing: 4) {
                         Image(systemName: "phone.fill")
@@ -174,17 +182,15 @@ extension ProfileView {
     // Custom Tab Bar
     private var customTabBar: some View {
         HStack {
-            // Eğer Sanatçıysa "Portfolio" sekmesini göster
             if authViewModel.currentUser?.role == "artist" {
                 tabButton(title: "Portfolio")
             }
             
-            // Herkeste "Likes" var
             tabButton(title: "Likes")
         }
         .padding(.top, 10)
         .padding(.bottom, 10)
-        .background(Color("BackgroundDark")) // Sticky header etkisi için
+        .background(Color("BackgroundDark"))
     }
     
     private func tabButton(title: String) -> some View {
@@ -210,39 +216,47 @@ extension ProfileView {
     
     // Grid Content
     private var postsGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 2) {
+        
+        let columns = [
+            GridItem(.flexible(), spacing: 2),
+            GridItem(.flexible(), spacing: 2),
+            GridItem(.flexible(), spacing: 2)
+        ]
+        return LazyVGrid(columns: columns, spacing: 2) {
             
-            // Hangi veriyi göstereceğiz?
             let posts = (selectedTab == "Portfolio") ? viewModel.userPosts : viewModel.likedPosts
             
+            if posts.isEmpty && selectedTab == "Portfolio" {
+                VStack {
+                    Image(systemName: selectedTab == "Portfolio" ? "camera" : "heart.slash")
+                        .font(.largeTitle)
+                        .foregroundColor(.gray)
+                    Text(selectedTab == "Portfolio" ? "No posts yet" : "No likes yet")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                .frame(height: 120)
+                .frame(maxWidth: .infinity)
+            }
+            
             ForEach(posts) { post in
-                // Gerçek resim
-                // WebImage(url: URL(string: post.imageUrl))...
-                
-                // Mock Resim
-                Image(post.imageUrl)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 120)
-                    .clipped()
+                let postOwner = post.user ?? viewModel.user
+                NavigationLink(destination: PostDetailView(post: post, user: postOwner)) {
+                    
+                    WebImage(url: URL(string: post.imageUrl))
+                        .resizable()
+                        .indicator(.activity)
+                        .transition(.fade(duration: 0.5))
+                        .scaledToFill()
+                        .frame(minWidth: 0, maxWidth: .infinity)
+                        .aspectRatio(1, contentMode: .fill)
+                        .clipped()
+                        .background(Color("CardDark"))
+                    
+                }
+                .buttonStyle(.plain)
             }
         }
     }
 }
 
-// İstatistik Bileşeni
-struct UserStatView: View {
-    let value: Int
-    let title: String
-    
-    var body: some View {
-        VStack {
-            Text("\(value)")
-                .font(.custom("Poppins-Bold", size: 18))
-                .foregroundColor(.white)
-            Text(title)
-                .font(.custom("Poppins-Regular", size: 12))
-                .foregroundColor(.gray)
-        }
-    }
-}

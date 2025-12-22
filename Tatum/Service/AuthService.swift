@@ -48,7 +48,6 @@ class AuthService: AuthServiceProtocol {
             
             guard let uid = result?.user.uid else { return }
             
-            // DİKKAT: Artık followersCount ve followingCount kaydetmiyoruz!
             let data: [String: Any] = [
                 "uid": uid,
                 "email": email,
@@ -76,20 +75,16 @@ class AuthService: AuthServiceProtocol {
         let db = Firestore.firestore()
         let userRef = db.collection("users").document(uid)
         
-        // 1. Kullanıcı Dokümanını Çek
         userRef.getDocument { snapshot, error in
             guard let data = snapshot?.data(), error == nil else {
                 completion(nil)
                 return
             }
             
-            // Temel verilerle User oluştur (Sayılar henüz 0)
             var user = TatumUser(data: data)
             
-            // 2. Sayıları Hesapla (Parallel Execution)
             let group = DispatchGroup()
             
-            // A) Followers Sayısı
             group.enter()
             userRef.collection("user-followers").count.getAggregation(source: .server) { snapshot, error in
                 if let count = snapshot?.count {
@@ -98,7 +93,6 @@ class AuthService: AuthServiceProtocol {
                 group.leave()
             }
             
-            // B) Following Sayısı
             group.enter()
             userRef.collection("user-following").count.getAggregation(source: .server) { snapshot, error in
                 if let count = snapshot?.count {
@@ -107,7 +101,6 @@ class AuthService: AuthServiceProtocol {
                 group.leave()
             }
             
-            // Hepsi bitince User'ı döndür
             group.notify(queue: .main) {
                 completion(user)
             }

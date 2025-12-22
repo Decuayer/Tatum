@@ -26,18 +26,20 @@ struct InboxView: View {
                         ScrollView {
                             VStack(spacing: 1) {
                                 ForEach(viewModel.recentMessages) { recent in
-                                    // Tıklanınca o kullanıcıya ait ChatView'i açacağız
-                                    // Not: RecentMessage içinde User objesi tam yok,
-                                    // Basitlik için burada User objesini 'recent' verisinden oluşturuyoruz.
-                                    // Daha sağlam yapı için ID ile fetch yapılabilir ama şimdilik bu yeterli.
-                                    
+                                   
                                     let targetUser = TatumUser(
-                                        id: recent.id ?? "",
-                                        email: "", // Bilinmiyor, gerek yok
+                                        id: recent.id,
+                                        email: "",
                                         username: recent.username,
-                                        fullName: recent.username, // Inbox'ta görünen isim
+                                        fullName: recent.username,
                                         profileImageUrl: recent.profileImageUrl,
-                                        role: "member", bio: nil, website: nil, phoneNumber: nil, followersCount: 0, followingCount: 0
+                                        role: "member",
+                                        bio: nil,
+                                        website: nil,
+                                        phoneNumber: nil,
+                                        studioId: nil,
+                                        followersCount: 0,
+                                        followingCount: 0
                                     )
                                     
                                     NavigationLink(destination: ChatView(user: targetUser)) {

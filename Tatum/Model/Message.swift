@@ -9,7 +9,7 @@ import Foundation
 import FirebaseFirestore
 
 struct Message: Identifiable, Codable, Hashable {
-    @DocumentID var id: String?
+    let id: String?
     let fromId: String
     let toId: String
     let text: String
@@ -29,7 +29,7 @@ struct Message: Identifiable, Codable, Hashable {
 }
 
 struct RecentMessage: Identifiable {
-    @DocumentID var id: String?
+    let id: String
     let text: String
     let fromId: String
     let toId: String

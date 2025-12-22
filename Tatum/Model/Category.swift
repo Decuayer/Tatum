@@ -10,7 +10,7 @@ import Foundation
 struct Category: Identifiable, Hashable {
     let id = UUID()
     let title: String
-    let iconName: String // SF Symbol veya asset ismi
+    let iconName: String
 }
 
 let sampleCategories: [Category] = [

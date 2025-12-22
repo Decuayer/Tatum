@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A36C8A4E2EF91D860069B3F2 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A36C8A4D2EF91D860069B3F2 /* FirebaseStorage */; };
 		A3D0A8A42EF4AE0F009DF402 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = A3D0A8A32EF4AE0F009DF402 /* SDWebImageSwiftUI */; };
 		A3D0A8C82EF4B3BA009DF402 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A3D0A8C72EF4B3BA009DF402 /* FirebaseCore */; };
 		A3D0A8D72EF4BB53009DF402 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = A3D0A8D62EF4BB53009DF402 /* FirebaseAuth */; };
@@ -46,6 +47,7 @@
 				A3D0A8C82EF4B3BA009DF402 /* FirebaseCore in Frameworks */,
 				A3D0A8DB2EF4BD1D009DF402 /* FirebaseFirestore in Frameworks */,
 				A3D0A8D72EF4BB53009DF402 /* FirebaseAuth in Frameworks */,
+				A36C8A4E2EF91D860069B3F2 /* FirebaseStorage in Frameworks */,
 				A3D0A8A42EF4AE0F009DF402 /* SDWebImageSwiftUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -93,6 +95,7 @@
 				A3D0A8C72EF4B3BA009DF402 /* FirebaseCore */,
 				A3D0A8D62EF4BB53009DF402 /* FirebaseAuth */,
 				A3D0A8DA2EF4BD1D009DF402 /* FirebaseFirestore */,
+				A36C8A4D2EF91D860069B3F2 /* FirebaseStorage */,
 			);
 			productName = Tatum;
 			productReference = A3D0A8B42EF4B089009DF402 /* Tatum.app */;
@@ -283,15 +286,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YJD5V9L5W4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Tatum/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to show you the nearest tattoo studios.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -316,15 +322,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YJD5V9L5W4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Tatum/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to show you the nearest tattoo studios.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -387,6 +396,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A36C8A4D2EF91D860069B3F2 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A3D0A8A12EF4ADA4009DF402 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
 		A3D0A8A32EF4AE0F009DF402 /* SDWebImageSwiftUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A3D0A8A22EF4AE0F009DF402 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;

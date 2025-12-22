@@ -9,16 +9,13 @@ import SwiftUI
 import SDWebImageSwiftUI
 
 struct UserProfileView: View {
-    // ViewModel'i init içinde kuruyoruz
     @StateObject var viewModel: UserProfileViewModel
     @Environment(\.dismiss) var dismiss
     
-    @State private var selectedTab = "Portfolio" // Varsayılan sekme
+    @State private var selectedTab = "Portfolio"
     
-    // Dışarıdan sadece 'user' objesi alıyoruz
     init(user: TatumUser) {
         _viewModel = StateObject(wrappedValue: UserProfileViewModel(user: user))
-        // Eğer kullanıcı sanatçı değilse varsayılan sekmeyi Likes yapabiliriz
         _selectedTab = State(initialValue: user.role == "artist" ? "Portfolio" : "Likes")
     }
     
@@ -49,13 +46,20 @@ struct UserProfileView: View {
             }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            print("🔄 UserProfileView göründü, veriler yenileniyor...")
+            
+            viewModel.fetchUserPosts()
+            viewModel.fetchLikedPosts()
+            
+            viewModel.refreshUserStats()
+        }
     }
 }
 
 // MARK: - Components
 extension UserProfileView {
     
-    // Geri Dön Butonu
     private var navBar: some View {
         HStack {
             Button(action: { dismiss() }) {
@@ -81,9 +85,7 @@ extension UserProfileView {
     private var headerView: some View {
         VStack(spacing: 16) {
             
-            // Foto ve İstatistikler
             HStack(spacing: 24) {
-                // Profil Fotosu
                 if let imageUrl = viewModel.user.profileImageUrl, !imageUrl.isEmpty {
                     WebImage(url: URL(string: imageUrl))
                         .resizable()
@@ -99,23 +101,30 @@ extension UserProfileView {
                 }
                 
                 HStack(spacing: 24) {
-                    UserStatView(value: viewModel.followersCount, title: "Followers")
-                    UserStatView(value: viewModel.followingCount, title: "Following")
+                    NavigationLink(destination: UserListView(uid: viewModel.user.id, type: .followers, title: "Followers")) {
+                        UserStatView(value: viewModel.followersCount, title: "Followers")
+                    }
+                    
+                    // Following
+                    NavigationLink(destination: UserListView(uid: viewModel.user.id, type: .following, title: "Following")) {
+                        UserStatView(value: viewModel.followingCount, title: "Following")
+                    }
+                    
+                    // Posts
                     if viewModel.user.role == "artist" {
                         UserStatView(value: viewModel.posts.count, title: "Posts")
                     }
                 }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal)
             
-            // İsim ve Detaylar
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text(viewModel.user.fullName)
                         .font(.custom("Poppins-SemiBold", size: 18))
                         .foregroundColor(.white)
                     
-                    // Sanatçı Rozeti
                     if viewModel.user.role == "artist" {
                         Image(systemName: "checkmark.seal.fill")
                             .foregroundColor(Color("BrandPurple"))
@@ -194,7 +203,6 @@ extension UserProfileView {
         .padding()
     }
     
-    // Tab Bar (Sekmeler)
     private var customTabBar: some View {
         HStack {
             if viewModel.user.role == "artist" {
@@ -229,25 +237,44 @@ extension UserProfileView {
     
     // Grid (Şimdilik Mock Data veya ViewModel'deki postlar)
     private var postsGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 2) {
-            // ViewModel'den gelen gerçek postlar
-            ForEach(viewModel.posts) { post in
-                Image(post.imageUrl) // SDWebImage ile değişecek
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 120)
-                    .clipped()
+        // Grid ayarları (Boşluklar ve Sütunlar)
+        let columns = [
+            GridItem(.flexible(), spacing: 2),
+            GridItem(.flexible(), spacing: 2),
+            GridItem(.flexible(), spacing: 2)
+        ]
+        
+        return LazyVGrid(columns: columns, spacing: 2) {
+            
+            if viewModel.posts.isEmpty && selectedTab == "Portfolio" {
+                VStack {
+                    Image(systemName: "photo")
+                        .font(.largeTitle)
+                        .foregroundColor(.gray)
+                    Text("No posts yet")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                .frame(height: 120)
+                .frame(maxWidth: .infinity)
             }
             
-            // Eğer post yoksa boş kalmasın diye (Test için)
-            if viewModel.posts.isEmpty {
-                ForEach(0..<6) { index in
-                    Image("welcome_img_\((index % 3) + 1)")
+            ForEach(viewModel.posts) { post in
+                
+                NavigationLink(destination: PostDetailView(post: post, user: viewModel.user)) {
+                    
+                    WebImage(url: URL(string: post.imageUrl))
                         .resizable()
+                        .indicator(.activity)
+                        .transition(.fade(duration: 0.5))
                         .scaledToFill()
-                        .frame(height: 120)
+                        .frame(minWidth: 0, maxWidth: .infinity)
+                        .aspectRatio(1, contentMode: .fill)
                         .clipped()
+                        .background(Color("CardDark"))
+                    
                 }
+                .buttonStyle(.plain)
             }
         }
     }

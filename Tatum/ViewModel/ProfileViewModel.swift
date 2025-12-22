@@ -13,7 +13,7 @@ class ProfileViewModel: ObservableObject {
     @Published var likedPosts: [Post] = []
     
     private let service: ProfileServiceProtocol
-    private let user: TatumUser // Hangi kullanıcının profili?
+    let user: TatumUser
     
     init(user: TatumUser, service: ProfileServiceProtocol = ProfileService()) {
         self.user = user
@@ -22,14 +22,19 @@ class ProfileViewModel: ObservableObject {
     }
     
     func loadData() {
-        // Eğer sanatçıysa kendi postlarını çek
-        if user.role == "artist" {
-            service.fetchUserPosts(uid: user.id) { [weak self] posts in
-                self?.userPosts = posts
-            }
-        }
+        fetchUserPosts()
+        fetchLikedPosts()
+    }
+    
+    func fetchUserPosts() {
+        guard user.role == "artist" else { return }
         
-        // Herkesin beğendiği postları çek
+        service.fetchUserPosts(uid: user.id) { [weak self] posts in
+            self?.userPosts = posts
+        }
+    }
+    
+    func fetchLikedPosts() {
         service.fetchLikedPosts(uid: user.id) { [weak self] posts in
             self?.likedPosts = posts
         }

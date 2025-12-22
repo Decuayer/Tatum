@@ -147,9 +147,100 @@ class ProfileService: ProfileServiceProtocol {
         }
     }
     
-    // Gereksizler
-    func fetchUserPosts(uid: String, completion: @escaping ([Post]) -> Void) { completion([]) }
-    func fetchLikedPosts(uid: String, completion: @escaping ([Post]) -> Void) { completion([]) }
+    // MARK: - POST FETCHING
+    func fetchUserPosts(uid: String, completion: @escaping ([Post]) -> Void) {
+        // "posts" koleksiyonunda, sahibi 'uid' olanları bul, tarihe göre sırala
+        Firestore.firestore().collection("posts")
+            .whereField("ownerUid", isEqualTo: uid)
+            .order(by: "timestamp", descending: true)
+            .getDocuments { snapshot, error in
+                guard let documents = snapshot?.documents, error == nil else {
+                    print("Post çekme hatası: \(error?.localizedDescription ?? "Bilinmiyor")")
+                    completion([])
+                    return
+                }
+                
+                // Gelen dokümanları Post modeline çevir
+                let posts = documents.compactMap { doc -> Post? in
+                    let data = doc.data()
+                    
+                    // Post modelimizdeki init metoduna uygun şekilde map ediyoruz
+                    return Post(
+                        id: doc.documentID,
+                        ownerUid: data["ownerUid"] as? String ?? "",
+                        studioId: data["studioId"] as? String ?? "",
+                        caption: data["caption"] as? String ?? "",
+                        likes: data["likes"] as? Int ?? 0,
+                        imageUrl: data["imageUrl"] as? String ?? "",
+                        timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
+                        user: nil // Grid görünümü için User detayına gerek yok
+                    )
+                }
+                
+                completion(posts)
+            }
+    }
+    
+    
+    // MARK: - LIKED POSTS FETCHING
+    func fetchLikedPosts(uid: String, completion: @escaping ([Post]) -> Void) {
+        Firestore.firestore().collection("users").document(uid).collection("user-likes").getDocuments { snapshot, error in
+            guard let documents = snapshot?.documents, error == nil else {
+                completion([])
+                return
+            }
+            
+            let postIds = documents.map { $0.documentID }
+            
+            guard !postIds.isEmpty else {
+                completion([])
+                return
+            }
+            
+            var posts: [Post] = []
+            let group = DispatchGroup()
+            
+            for postId in postIds {
+                group.enter()
+                Firestore.firestore().collection("posts").document(postId).getDocument { snapshot, _ in
+                    if let data = snapshot?.data(), snapshot?.exists == true {
+                        var post = Post(
+                            id: snapshot?.documentID ?? "",
+                            ownerUid: data["ownerUid"] as? String ?? "",
+                            studioId: data["studioId"] as? String ?? "",
+                            caption: data["caption"] as? String ?? "",
+                            likes: data["likes"] as? Int ?? 0,
+                            imageUrl: data["imageUrl"] as? String ?? "",
+                            timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
+                            user: nil
+                        )
+                        
+                        self.fetchUser(uid: post.ownerUid) { user in
+                            post.user = user
+                            posts.append(post)
+                            group.leave()
+                        }
+                    } else {
+                        group.leave()
+                    }
+                }
+            }
+            
+            group.notify(queue: .main) {
+                completion(posts.sorted(by: { $0.timestamp > $1.timestamp }))
+            }
+        }
+    }
+    private func fetchUser(uid: String, completion: @escaping (TatumUser?) -> Void) {
+        Firestore.firestore().collection("users").document(uid).getDocument { snapshot, _ in
+            guard let data = snapshot?.data() else {
+                completion(nil)
+                return
+            }
+            completion(TatumUser(data: data))
+        }
+    }
+    
     func deleteUserFromFirestore(uid: String, completion: @escaping (Error?) -> Void) {
         Firestore.firestore().collection("users").document(uid).delete(completion: completion)
     }

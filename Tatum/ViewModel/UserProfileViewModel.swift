@@ -4,6 +4,7 @@ import Combine
 class UserProfileViewModel: ObservableObject {
     @Published var user: TatumUser
     @Published var posts: [Post] = []
+    @Published var likedPosts: [Post] = []
     
     @Published var isFollowed: Bool = false
     @Published var followersCount: Int = 0
@@ -15,16 +16,15 @@ class UserProfileViewModel: ObservableObject {
         self.user = user
         self.service = service
         
-        // Veri kaynağından (Service) gelen Taze Sayılar
         self.followersCount = user.followersCount
         self.followingCount = user.followingCount
         
         self.checkIfFollowed()
         self.fetchUserPosts()
+        self.fetchLikedPosts()
     }
     
     func follow() {
-        // Optimistic UI Update
         isFollowed = true
         followersCount += 1
         
@@ -39,7 +39,6 @@ class UserProfileViewModel: ObservableObject {
     }
     
     func unfollow() {
-        // Optimistic UI Update
         isFollowed = false
         followersCount = max(0, followersCount - 1)
         
@@ -61,7 +60,33 @@ class UserProfileViewModel: ObservableObject {
     
     func fetchUserPosts() {
         service.fetchUserPosts(uid: user.id) { [weak self] posts in
-            DispatchQueue.main.async { self?.posts = posts }
+            DispatchQueue.main.async {
+                self?.posts = posts
+            }
         }
+    }
+    
+    func fetchLikedPosts() {
+        let profileService = ProfileService()
+        profileService.fetchLikedPosts(uid: user.id) { [weak self] posts in
+            self?.likedPosts = posts
+        }
+    }
+    
+    // MARK: - REFRESH DATA
+    
+    func refreshUserStats() {
+        let authService = AuthService()
+        
+        authService.fetchUser(uid: user.id) { [weak self] updatedUser in
+            guard let updatedUser = updatedUser else { return }
+            
+            DispatchQueue.main.async {
+                self?.user = updatedUser
+                self?.followersCount = updatedUser.followersCount
+                self?.followingCount = updatedUser.followingCount
+            }
+        }
+        checkIfFollowed()
     }
 }

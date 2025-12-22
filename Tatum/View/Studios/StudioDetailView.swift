@@ -9,12 +9,17 @@ import SwiftUI
 import SDWebImageSwiftUI
 
 struct StudioDetailView: View {
-    let studio: Studio
+    @StateObject var viewModel: StudioDetailViewModel
     @Environment(\.dismiss) var dismiss
-    @State private var selectedTab: String = "Portfolio" // Sayfa içi sekme durumu
-    @State private var showBookingSheet = false // EKLENDİ
+    @State private var selectedTab: String = "Portfolio"
+    @State private var showBookingSheet = false
+    @State private var showClaimSheet = false
     
     @Namespace private var animation
+    
+    init(studio: Studio) {
+        _viewModel = StateObject(wrappedValue: StudioDetailViewModel(studio: studio))
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -23,47 +28,57 @@ struct StudioDetailView: View {
             
             ScrollView {
                 VStack(spacing: 0) {
-                    // Üst Alan (Resim ve Geri Butonu)
                     headerSection
-                    
-                    // Stüdyo Bilgileri
                     infoSection
                     
-                    // Özel Sekme Değiştirici (Portfolio - Artists - Reviews)
-                    customTabBar
-                        .zIndex(1)
-                    
-                    // Seçili Sekmeye Göre İçerik
-                    if selectedTab == "Portfolio" {
-                        portfolioGrid
-                    } else if selectedTab == "Artists" {
-                        artistList
+                    if viewModel.studio.isClaimed {
+                        customTabBar.zIndex(1)
+                        
+                        if viewModel.isLoading {
+                            ProgressView().padding(.top, 50)
+                        } else {
+                            if selectedTab == "Portfolio" {
+                                portfolioGrid
+                            } else if selectedTab == "Artists" {
+                                artistList
+                            } else {
+                                reviewsSection
+                            }
+                        }
                     } else {
-                        reviewsSection
+                        unclaimedStateView
                     }
                 }
                 .padding(.bottom, 120)
             }
             .ignoresSafeArea(edges: .top)
             
-            bookNowButton
+            if viewModel.studio.isClaimed {
+                bookNowButton
+            } else {
+                claimButton
+            }
         }
         .navigationBarHidden(true)
         .sheet(isPresented: $showBookingSheet) {
-                    BookingView(studio: studio)
-                        .presentationDetents([.fraction(0.7), .large])
-                        .presentationDragIndicator(.visible)
-                }
+            BookingView(studio: viewModel.studio)
+                .presentationDetents([.fraction(0.7), .large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showClaimSheet) {
+            ClaimStudioView(studio: viewModel.studio)
+        }
     }
 }
 
+
+//MARK: - Extensions
+
 extension StudioDetailView {
-    // Header Section
     private var headerSection: some View {
         ZStack(alignment: .topLeading) {
-            // SDWebImage Kullanımı
             GeometryReader { geometry in
-                WebImage(url: URL(string: studio.imageUrl)) { image in
+                WebImage(url: URL(string: viewModel.studio.imageUrl)) { image in
                     image
                         .resizable()
                         .scaledToFill()
@@ -77,12 +92,9 @@ extension StudioDetailView {
                 .overlay(
                     LinearGradient(gradient: Gradient(colors: [.clear, Color("BackgroundDark")]), startPoint: .center, endPoint: .bottom)
                 )
-                
-                
             }
             .frame(height: 350)
             
-            // Go Back Button
             Button(action: { dismiss() }) {
                 Image(systemName: "arrow.left")
                     .foregroundColor(.white)
@@ -95,17 +107,16 @@ extension StudioDetailView {
         }
     }
     
-    // Info Section
     private var infoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(studio.name)
+            Text(viewModel.studio.name)
                 .font(.custom("Poppins-Bold", size: 28))
                 .foregroundColor(.white)
             
             HStack {
                 Image(systemName: "mappin.and.ellipse")
                     .foregroundColor(Color("BrandPurple"))
-                Text(studio.address)
+                Text(viewModel.studio.address)
                     .font(.custom("Poppins-Regular", size: 14))
                     .foregroundColor(.gray)
             }
@@ -113,7 +124,7 @@ extension StudioDetailView {
             HStack {
                 Image(systemName: "star.fill")
                     .foregroundColor(Color("BrandYellow"))
-                Text(String(format: "%.1f (120 Reviews)", studio.rating))
+                Text(String(format: "%.1f (120 Reviews)", viewModel.studio.rating))
                     .font(.custom("Poppins-Medium", size: 14))
                     .foregroundColor(.white)
                 
@@ -132,7 +143,6 @@ extension StudioDetailView {
         .padding(.bottom, 20)
     }
     
-    // Custom Tab Bar
     private var customTabBar: some View {
         HStack {
             ForEach(["Portfolio", "Artists", "Reviews"], id: \.self) { tab in
@@ -164,36 +174,80 @@ extension StudioDetailView {
         .padding(.bottom, 10)
     }
     
-    // Portfolio Contents (Grid)
     private var portfolioGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 2) {
-            ForEach(0..<12) { index in
-                Image("TestTattoo\((index % 3) + 1)") // Test Resimleri
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 120)
-                    .clipped()
+        VStack {
+            if viewModel.posts.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "camera")
+                        .font(.largeTitle)
+                        .foregroundColor(.gray)
+                    Text("No posts yet.")
+                        .foregroundColor(.gray)
+                }
+                .padding(.top, 40)
+            } else {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 2) {
+                    ForEach(viewModel.posts) { post in
+                        let postOwner = viewModel.artists.first(where: { $0.id == post.ownerUid })
+                        ?? TatumUser(
+                            id: viewModel.studio.ownerId ?? UUID().uuidString,
+                            email: "",
+                            username: viewModel.studio.name,
+                            fullName: viewModel.studio.name,
+                            profileImageUrl: viewModel.studio.imageUrl,
+                            role: "studio",
+                            bio: "Studio Official Account",
+                            website: "",
+                            phoneNumber: viewModel.studio.phoneNumber,
+                            studioId: viewModel.studio.id,
+                            followersCount: 0,
+                            followingCount: 0
+                        )
+                        
+                        NavigationLink(destination: PostDetailView(post: post, user: postOwner)) { 
+                            WebImage(url: URL(string: post.imageUrl))
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 120)
+                                .clipped()
+                                .background(Color("CardDark"))
+                        }
+                    }
+                }
             }
         }
     }
     
-    // Artists Content (List)
     private var artistList: some View {
         VStack(spacing: 16) {
-            ForEach(0..<3) { _ in
+            if viewModel.artists.isEmpty {
+                Text("No artists registered yet.")
+                    .foregroundColor(.gray)
+                    .padding(.top, 40)
+            }
+            
+            ForEach(viewModel.artists) { artist in
                 HStack {
-                    Image("decu")
-                        .resizable()
-                        .frame(width: 60, height: 60)
-                        .clipShape(Circle())
+                    WebImage(url: URL(string: artist.profileImageUrl ?? "")) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } placeholder: {
+                        Image(systemName: "person.circle.fill")
+                            .resizable()
+                            .foregroundColor(.gray)
+                    }
+                    .frame(width: 60, height: 60)
+                    .clipShape(Circle())
                     
                     VStack(alignment: .leading) {
-                        Text("Artist Name")
+                        Text(artist.username) // Veya fullName
                             .font(.custom("Poppins-SemiBold", size: 16))
                             .foregroundColor(.white)
-                        Text("Traditional Specialist")
+                        Text(artist.bio ?? "Tattoo Artist")
                             .font(.custom("Poppins-Regular", size: 12))
                             .foregroundColor(.gray)
+                            .lineLimit(1)
                     }
                     
                     Spacer()
@@ -214,7 +268,6 @@ extension StudioDetailView {
         .padding()
     }
     
-    // Comments Section
     private var reviewsSection: some View {
         Text("Reviews functionality will be implemented here.")
             .foregroundColor(.gray)
@@ -222,7 +275,6 @@ extension StudioDetailView {
             .frame(maxWidth: .infinity, minHeight: 200)
     }
     
-    // Book Now Button
     private var bookNowButton: some View {
         Button(action: {
             showBookingSheet.toggle()
@@ -245,6 +297,45 @@ extension StudioDetailView {
         )
         
     }
-
+    
+    private var unclaimedStateView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "building.2.crop.circle.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.gray)
+                .padding(.top, 40)
+            
+            Text("This studio is unclaimed")
+                .font(.custom("Poppins-Bold", size: 20))
+                .foregroundColor(.white)
+            
+            Text("If you are the owner of \(viewModel.studio.name), you can claim this page to manage photos, artists, and appointments.")
+                .font(.custom("Poppins-Regular", size: 14))
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+            
+            Spacer().frame(height: 50)
+        }
+    }
+    
+    private var claimButton: some View {
+        Button(action: {
+            showClaimSheet.toggle()
+        }) {
+            Text("Claim This Business")
+                .font(.custom("Poppins-Bold", size: 18))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(Color("BrandPurple"))
+                .cornerRadius(16)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 10)
+        .background(Color("BackgroundDark"))
+    }
+    
 }
 

@@ -6,25 +6,113 @@
 //
 
 import Foundation
-import Combine
+import MapKit
+import FirebaseFirestore
 
-//MARK: - Protocol
 protocol StudioServiceProtocol {
-    func fetchStudios(completion: @escaping ([Studio]) -> Void)
+    func searchStudios(region: MKCoordinateRegion, completion: @escaping ([Studio]) -> Void)
 }
 
-//MARK: - Class
 class StudioService: StudioServiceProtocol {
     
-    func fetchStudios(completion: @escaping ([Studio]) -> Void) {
-        // Şimdilik test için sahte veri
-        // Buraya Firestore kodu gelecek.
-        let mockStudios = [
-            Studio(id: "1", name: "Factor Tattoo", ownerId: "uid1", address: "Kadikoy, Istanbul", rating: 9.0, imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQ2Ytiu-OZ0GwMFSTkeQYn1bSO2V-fpmNAwQ&s", latitude: 40.9829, longitude: 29.0282),
-            Studio(id: "2", name: "Cleopatra Ink", ownerId: "uid2", address: "Besiktas, Istanbul", rating: 9.4, imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQ2Ytiu-OZ0GwMFSTkeQYn1bSO2V-fpmNAwQ&s", latitude: 41.0422, longitude: 29.0060),
-            Studio(id: "3", name: "Iron & Ink", ownerId: "uid3", address: "Sisli, Istanbul", rating: 8.8, imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQ2Ytiu-OZ0GwMFSTkeQYn1bSO2V-fpmNAwQ&s", latitude: 41.0600, longitude: 28.9870)
+    func searchStudios(region: MKCoordinateRegion, completion: @escaping ([Studio]) -> Void) {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = "Tattoo"
+        request.region = region
+        
+        let search = MKLocalSearch(request: request)
+        
+        search.start { response, error in
+            guard let response = response else {
+                print("DEBUG: Arama hatası: \(error?.localizedDescription ?? "Bilinmeyen hata")")
+                completion([])
+                return
+            }
+            
+            let foundStudios = response.mapItems.map { item -> Studio in
+                
+                let placemark = item.placemark
+                let addressComponents = [
+                    placemark.thoroughfare,       // Cadde/Sokak
+                    placemark.subThoroughfare,    // Kapı No
+                    placemark.locality,           // İlçe
+                    placemark.administrativeArea  // İl
+                ].compactMap { $0 }
+                
+                let formattedAddress = addressComponents.isEmpty ? "Adres Bilgisi Yok" : addressComponents.joined(separator: ", ")
+                
+                return Studio(
+                    id: UUID().uuidString,
+                    name: item.name ?? "Unknown Studio",
+                    address: formattedAddress,
+                    ownerId: nil,
+                    rating: 0.0,
+                    imageUrl: "",
+                    latitude: placemark.coordinate.latitude,
+                    longitude: placemark.coordinate.longitude,
+                    phoneNumber: item.phoneNumber,
+                    isClaimed: false
+                )
+            }
+            
+            completion(foundStudios)
+        }
+    }
+    
+    func claimStudio(studio: Studio, extraData: [String: Any], completion: @escaping (Bool) -> Void) {
+        let db = Firestore.firestore()
+        
+        var newStudioData: [String: Any] = [
+            "id": studio.id,
+            "name": studio.name,
+            "address": studio.address,
+            "latitude": studio.latitude,
+            "longitude": studio.longitude,
+            "isClaimed": true,
+            "rating": 0.0,
+            "imageUrl": "",
+            "createdAt": Timestamp()
         ]
         
-        completion(mockStudios)
+        newStudioData.merge(extraData) { (_, new) in new }
+        
+        db.collection("studios").document(studio.id).setData(newStudioData) { error in
+            if let error = error {
+                print("Error claiming studio: \(error.localizedDescription)")
+                completion(false)
+            } else {
+                print("Studio successfully claimed!")
+                completion(true)
+            }
+        }
+    }
+    
+    func fetchClaimedStudios(completion: @escaping ([Studio]) -> Void) {
+        let db = Firestore.firestore()
+        
+        db.collection("studios").getDocuments { snapshot, error in
+            guard let documents = snapshot?.documents, error == nil else {
+                print("Error fetching claimed studios: \(error?.localizedDescription ?? "")")
+                completion([])
+                return
+            }
+            
+            let studios = documents.compactMap { doc -> Studio? in
+                let data = doc.data()
+                return Studio(
+                    id: doc.documentID,
+                    name: data["name"] as? String ?? "Unknown",
+                    address: data["address"] as? String ?? "",
+                    ownerId: data["ownerId"] as? String,
+                    rating: data["rating"] as? Double ?? 0.0,
+                    imageUrl: data["imageUrl"] as? String ?? "",
+                    latitude: data["latitude"] as? Double ?? 0.0,
+                    longitude: data["longitude"] as? Double ?? 0.0,
+                    phoneNumber: data["phoneNumber"] as? String,
+                    isClaimed: true
+                )
+            }
+            completion(studios)
+        }
     }
 }

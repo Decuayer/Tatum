@@ -11,12 +11,14 @@ import CoreLocation
 struct Studio: Identifiable, Codable {
     let id: String
     let name: String
-    let ownerId: String
     let address: String
-    let rating: Double
-    let imageUrl: String
+    var ownerId: String? 
+    var rating: Double
+    var imageUrl: String
     let latitude: Double
     let longitude: Double
+    var phoneNumber: String?
+    var isClaimed: Bool
     
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
