@@ -19,7 +19,11 @@ struct PostDetailView: View {
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    postHeader
+                    NavigationLink(destination: TatumProfileView(user: user)) {
+                        postHeader
+                    }
+                    .buttonStyle(.plain)
+                    
                     postImage
                     postFooter
                 }
@@ -80,6 +84,7 @@ extension PostDetailView {
                 .foregroundColor(.white)
         }
         .padding(12)
+        .contentShape(Rectangle())
     }
     
     private var postImage: some View {

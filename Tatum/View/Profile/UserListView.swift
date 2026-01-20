@@ -3,7 +3,7 @@ import SDWebImageSwiftUI
 
 struct UserListView: View {
     @StateObject var viewModel: UserListViewModel
-    @EnvironmentObject var authViewModel: AuthViewModel // Profil sayılarını güncellemek için
+    @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) var dismiss
     let title: String
     
@@ -13,51 +13,37 @@ struct UserListView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color("BackgroundDark").ignoresSafeArea()
-                
-                if viewModel.users.isEmpty {
-                    // Boş liste uyarısı
-                    Text("No users found.")
-                        .foregroundColor(.gray)
-                        .padding(.top, 50)
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 16) {
-                            ForEach(viewModel.users) { user in
-                                // Tıklayınca Profile Git
-                                NavigationLink(destination: UserProfileView(user: user)) {
-                                    UserRow(
-                                        user: user,
-                                        listType: viewModel.listType,
-                                        onAction: {
-                                            // Butona basılınca çalışacak kod
-                                            handleAction(for: user)
-                                        }
-                                    )
-                                }
-                                .buttonStyle(.plain)
+        ZStack {
+            Color("BackgroundDark").ignoresSafeArea()
+            
+            if viewModel.users.isEmpty {
+                Text("No users found.")
+                    .foregroundColor(.gray)
+                    .padding(.top, 50)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(viewModel.users) { user in
+                            NavigationLink(destination: TatumProfileView(user: user)) {
+                                UserRow(
+                                    user: user,
+                                    listType: viewModel.listType,
+                                    onAction: {
+                                        handleAction(for: user)
+                                    }
+                                )
                             }
+                            .buttonStyle(.plain)
                         }
-                        .padding()
                     }
-                }
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "arrow.left")
-                            .foregroundColor(.white)
-                    }
+                    .padding()
                 }
             }
         }
+        .navigationTitle(title)
+        
     }
     
-    // BUTON AKSİYONU VE PROFİL GÜNCELLEME
     func handleAction(for user: TatumUser) {
         viewModel.performAction(for: user) { success in
             if success {
@@ -76,7 +62,6 @@ struct UserListView: View {
     }
 }
 
-// MARK: - Akıllı Liste Satırı
 struct UserRow: View {
     let user: TatumUser
     let listType: UserListType
@@ -84,7 +69,6 @@ struct UserRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Profil Fotosu
             if let imageUrl = user.profileImageUrl {
                 WebImage(url: URL(string: imageUrl))
                     .resizable()
@@ -98,7 +82,6 @@ struct UserRow: View {
                     .frame(width: 50, height: 50)
             }
             
-            // İsimler
             VStack(alignment: .leading, spacing: 2) {
                 Text(user.username)
                     .font(.custom("Poppins-SemiBold", size: 16))
@@ -112,7 +95,6 @@ struct UserRow: View {
             
             Spacer()
             
-            // AKILLI BUTON
             Button(action: {
                 onAction()
             }) {

@@ -36,10 +36,7 @@ struct PostService {
                     completion(false)
                     return
                 }
-                
-                // İsteğe bağlı: Kullanıcının kendi profili altına da referans eklenebilir
-                // Ama şimdilik global 'posts' koleksiyonu yeterli.
-                
+                                
                 completion(true)
             }
         }
@@ -108,7 +105,6 @@ struct PostService {
             "timestamp": Timestamp(date: Date())
         ]
         
-        // Post'un altına 'post-comments' koleksiyonuna ekle
         Firestore.firestore().collection("posts").document(postId).collection("post-comments").addDocument(data: data) { error in
             if let error = error {
                 print("Yorum yükleme hatası: \(error.localizedDescription)")
@@ -119,13 +115,11 @@ struct PostService {
         }
     }
     
-    // Yorumları Getir (Real-time Dinleme)
     static func fetchComments(post: Post, completion: @escaping([Comment]) -> Void) {
         guard let postId = post.id else { return }
         
-        // Tarihe göre sırala (Eskiden yeniye veya tam tersi)
         Firestore.firestore().collection("posts").document(postId).collection("post-comments")
-            .order(by: "timestamp", descending: false) // Eskiler üstte, yeniler altta
+            .order(by: "timestamp", descending: false)
             .addSnapshotListener { snapshot, error in
                 guard let documents = snapshot?.documents, error == nil else {
                     print("Yorum çekme hatası: \(error?.localizedDescription ?? "")")
@@ -137,6 +131,20 @@ struct PostService {
                 }
                 
                 completion(comments)
+            }
+    }
+    
+    static func fetchPosts(completion: @escaping([Post]) -> Void) {
+        Firestore.firestore().collection("posts")
+            .order(by: "timestamp", descending: true)
+            .getDocuments { snapshot, error in
+                guard let documents = snapshot?.documents else {
+                    print("Postları çekerken hata: \(error?.localizedDescription ?? "")")
+                    return
+                }
+                
+                let posts = documents.compactMap({ try? $0.data(as: Post.self) })
+                completion(posts)
             }
     }
 }

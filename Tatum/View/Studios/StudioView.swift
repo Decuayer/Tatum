@@ -11,13 +11,12 @@ import SDWebImageSwiftUI
 
 struct StudioView: View {
     @StateObject var viewModel = StudioViewModel()
-    
     @State private var selectedStudioId: String?
     
     var body: some View {
         NavigationView {
             ZStack(alignment: .bottom) {
-                Map(coordinateRegion: $viewModel.region, annotationItems: viewModel.studios) { studio in
+                Map(coordinateRegion: $viewModel.region, showsUserLocation: true, annotationItems: viewModel.studios) { studio in
                     MapAnnotation(coordinate: studio.coordinate) {
                         VStack {
                             Image(systemName: studio.isClaimed ? "checkmark.seal.fill" : "mappin.circle.fill")

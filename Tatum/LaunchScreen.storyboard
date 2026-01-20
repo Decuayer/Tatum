@@ -16,37 +16,45 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" translatesAutoresizingMaskIntoConstraints="NO" id="obG-Y5-kRd">
-                                <rect key="frame" x="0.0" y="832" width="393" height="0.0"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Tatum" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" minimumFontSize="18" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
-                                <rect key="frame" x="0.0" y="263.66666666666669" width="393" height="43"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="36"/>
-                                <color key="textColor" name="BrandPurple"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="BackgroundTestImage" translatesAutoresizingMaskIntoConstraints="NO" id="WYB-wh-zLh">
-                                <rect key="frame" x="0.0" y="-140.66666666666663" width="393" height="1133.3333333333333"/>
-                            </imageView>
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="fLW-HI-B3R">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                                <subviews>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tatum" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" minimumFontSize="18" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
+                                        <rect key="frame" x="0.0" y="0.0" width="393" height="352"/>
+                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="36"/>
+                                        <color key="textColor" name="BrandPurple"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="BackgroundTestImage" translatesAutoresizingMaskIntoConstraints="NO" id="WYB-wh-zLh">
+                                        <rect key="frame" x="0.0" y="352" width="393" height="500"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="500" id="Rhm-Hb-CRA"/>
+                                        </constraints>
+                                    </imageView>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="GJd-Yh-RWb" firstAttribute="centerX" secondItem="fLW-HI-B3R" secondAttribute="centerX" id="GcD-WX-uAl"/>
+                                    <constraint firstAttribute="trailing" secondItem="GJd-Yh-RWb" secondAttribute="trailing" id="IKO-Cg-qNz"/>
+                                    <constraint firstAttribute="trailing" secondItem="WYB-wh-zLh" secondAttribute="trailing" id="JNZ-g2-xsA"/>
+                                    <constraint firstItem="WYB-wh-zLh" firstAttribute="centerX" secondItem="fLW-HI-B3R" secondAttribute="centerX" id="Zxg-c8-Oaw"/>
+                                    <constraint firstItem="WYB-wh-zLh" firstAttribute="leading" secondItem="fLW-HI-B3R" secondAttribute="leading" id="fKe-8i-GJ0"/>
+                                    <constraint firstItem="GJd-Yh-RWb" firstAttribute="leading" secondItem="fLW-HI-B3R" secondAttribute="leading" id="qZu-Vf-zxR"/>
+                                </constraints>
+                            </stackView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
                         <color key="backgroundColor" name="BackgroundDark"/>
                         <constraints>
-                            <constraint firstItem="Bcu-3y-fUS" firstAttribute="trailing" secondItem="WYB-wh-zLh" secondAttribute="trailing" id="JTM-Kd-OJz"/>
-                            <constraint firstItem="WYB-wh-zLh" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="XuW-mh-JJP"/>
-                            <constraint firstItem="WYB-wh-zLh" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" id="t1s-yR-WEK"/>
-                            <constraint firstItem="WYB-wh-zLh" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="ujL-HN-CTy"/>
+                            <constraint firstAttribute="bottom" secondItem="fLW-HI-B3R" secondAttribute="bottom" id="1s8-e4-0tm"/>
+                            <constraint firstItem="fLW-HI-B3R" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="4FE-ED-D1Z"/>
+                            <constraint firstAttribute="trailing" secondItem="fLW-HI-B3R" secondAttribute="trailing" id="Med-ZT-ltP"/>
+                            <constraint firstItem="fLW-HI-B3R" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" id="vsk-YD-bhV"/>
                         </constraints>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="53" y="375"/>
+            <point key="canvasLocation" x="52.671755725190835" y="374.64788732394368"/>
         </scene>
     </scenes>
     <resources>

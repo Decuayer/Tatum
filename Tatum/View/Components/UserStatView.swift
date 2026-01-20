@@ -19,7 +19,7 @@ struct UserStatView: View {
                 .font(.custom("Poppins-Bold", size: 18))
                 .foregroundColor(.white)
             Text(title)
-                .font(.custom("Poppins-Regular", size: 12))
+                .font(.custom("Poppins-Regular", size: 14))
                 .foregroundColor(.gray)
         }
     }

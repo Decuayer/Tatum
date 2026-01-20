@@ -12,6 +12,7 @@ import Combine
 class AuthViewModel: ObservableObject {
     @Published var userSession: String?
     @Published var currentUser: TatumUser?
+    @Published var isLoading = true
     
     private let service: AuthServiceProtocol
     private var cancellables = Set<AnyCancellable>()
@@ -28,10 +29,16 @@ class AuthViewModel: ObservableObject {
             .sink { [weak self] uid in
                 self?.userSession = uid
                 
+                print("DEBUG: User Session Changed -> \(String(describing: uid))")
+                
                 if let uid = uid {
+                    self?.isLoading = true
                     self?.fetchUser(uid: uid)
                 } else {
                     self?.currentUser = nil
+                    self?.isLoading = false
+                    
+                    print("DEBUG: No session, isLoading is set to false.")
                 }
             }
             .store(in: &cancellables)
@@ -49,13 +56,34 @@ class AuthViewModel: ObservableObject {
     
     //MARK: - Extracting User Information
     func fetchUser(uid: String) {
+        print("DEBUG: Fetch User Started.")
         service.fetchUser(uid: uid) { [weak self] user in
             self?.currentUser = user
+            self?.isLoading = false
+            
+            if let user = user {
+                print("DEBUG: User Uploaded: \(user.username)")
+            } else {
+                print("DEBUG: User returned NIL.")
+            }
         }
     }
     
     //MARK: - Sign Out Function
     func signOut() {
         service.signOut()
+        self.currentUser = nil
+        self.isLoading = false
+    }
+    
+    //MARK: - TESTING NOT SURE
+    func updateFollowingCount(increment: Bool) {
+        guard var user = currentUser else { return }
+        if increment {
+            user.followingCount += 1
+        } else {
+            user.followingCount = max(0, user.followingCount - 1)
+        }
+        self.currentUser = user
     }
 }

@@ -9,7 +9,7 @@ import Foundation
 import FirebaseFirestore
 
 struct Post: Identifiable, Codable, Hashable {
-    let id: String?
+    @DocumentID var id: String?
     let ownerUid: String
     let studioId: String?
     let caption: String

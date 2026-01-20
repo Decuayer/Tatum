@@ -1,10 +1,3 @@
-//
-//  StudioViewModel.swift
-//  Tatum
-//
-//  Created by Demir Cücü on 19.12.2025.
-//
-
 import Foundation
 import MapKit
 import Combine
@@ -12,36 +5,66 @@ import CoreLocation
 
 class StudioViewModel: ObservableObject {
     @Published var studios: [Studio] = []
-    @Published var region: MKCoordinateRegion
+    
+    @Published var region: MKCoordinateRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 41.0082, longitude: 28.9784),
+        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    )
     
     private let service: StudioService
     private let locationManager = LocationManager()
     private var cancellables = Set<AnyCancellable>()
     
+    private var lastSearchLocation: CLLocationCoordinate2D?
     private var claimedStudios: [Studio] = []
     
     init(service: StudioService = StudioService()) {
         self.service = service
-        self.region = MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 41.0082, longitude: 28.9784),
-            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-        )
-        
-        setupLocationManager()
+        setupBindings()
     }
     
-    private func setupLocationManager() {
-        locationManager.$region
-            .receive(on: DispatchQueue.main)
+    private func setupBindings() {
+        locationManager.$userLocation
+            .compactMap { $0 }
             .first()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] coordinate in
+                guard let self = self else { return }
+                self.region = MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                )
+                self.checkAndSearch(center: coordinate)
+            }
+            .store(in: &cancellables)
+        
+        $region
+            .debounce(for: .seconds(0.8), scheduler: DispatchQueue.main)
             .sink { [weak self] newRegion in
-                self?.region = newRegion
-                self?.loadAllStudios(in: newRegion)
+                self?.checkAndSearch(center: newRegion.center)
             }
             .store(in: &cancellables)
     }
     
+    private func checkAndSearch(center: CLLocationCoordinate2D) {
+        if let lastLocation = lastSearchLocation {
+            let oldLoc = CLLocation(latitude: lastLocation.latitude, longitude: lastLocation.longitude)
+            let newLoc = CLLocation(latitude: center.latitude, longitude: center.longitude)
+            
+            let distance = oldLoc.distance(from: newLoc)
+            
+            if distance < 500 {
+                return
+            }
+        }
+        
+        lastSearchLocation = center
+        loadAllStudios(in: MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
+    }
+    
     func loadAllStudios(in region: MKCoordinateRegion) {
+        print("DEBUG: API İsteği atılıyor... Merkez: \(region.center.latitude), \(region.center.longitude)")
+        
         service.fetchClaimedStudios { [weak self] claimed in
             guard let self = self else { return }
             self.claimedStudios = claimed

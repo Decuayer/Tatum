@@ -1,5 +1,6 @@
 import Foundation
 import FirebaseFirestore
+import FirebaseAuth
 
 struct TatumUser: Identifiable, Codable, Hashable, Sendable {
     let id: String
@@ -42,5 +43,12 @@ struct TatumUser: Identifiable, Codable, Hashable, Sendable {
         self.followersCount = followersCount
         self.followingCount = followingCount
         self.studioId = studioId
+    }
+}
+
+extension TatumUser {
+    var isCurrentUser: Bool {
+        guard let currentUid = Auth.auth().currentUser?.uid else { return false }
+        return id == currentUid
     }
 }
