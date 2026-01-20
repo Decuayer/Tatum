@@ -11,9 +11,8 @@ import SDWebImageSwiftUI
 struct FeedCall: View {
     var body: some View {
         VStack(alignment: .leading) {
-            // 1. Üst Kısım: Kullanıcı Bilgisi
             HStack {
-                Image("decu") // Placeholder (Sonrasında kullanıcı fotosu gelecek)
+                Image("decu")
                     .resizable()
                     .scaledToFill()
                     .frame(width: 36, height: 36)
@@ -33,15 +32,13 @@ struct FeedCall: View {
             .padding(.leading, 8)
             .padding(.bottom, 4)
             
-            // 2. Orta Kısım: Dövme Fotoğraf
-            Image("TestTattoo1") // Placeholder (Sonra SDWebImage ile URL'den çekeceğiz)
+            Image("TestTattoo1")
                 .resizable()
                 .scaledToFill()
                 .frame(height: 400)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .clipped()
             
-            // 3. Alt Kısım: Butonlar (Beğeni Yorum)
             HStack {
                 Button(action: {}) {
                     Image(systemName: "heart")
@@ -67,7 +64,6 @@ struct FeedCall: View {
             .padding(.top, 4)
             .padding(.leading, 8)
             
-            // 4. Beğeni Sayısı ve Açıklama
             Text("23 Likes")
                 .font(.custom("Poppins-Bold", size: 14))
                 .foregroundColor(.white)
