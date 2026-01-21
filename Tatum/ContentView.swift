@@ -8,17 +8,17 @@
 import SwiftUI
 
 struct ContentView: View {
-    // ViewModel'i buraya bağlıyoruz
+    // Bind ViewModel here
     @EnvironmentObject var viewModel: AuthViewModel
     
     
     var body: some View {
         Group {
             if viewModel.userSession != nil {
-                // Eğer kullanıcı oturumu varsa anasayfaya git
+                // If user session exists, go to main
                 MainTabView()
             } else {
-                // Yoksa karşılama ekranına git
+                // Otherwise go to onboarding
                 NavigationView {
                     OnboardingView()
                 }

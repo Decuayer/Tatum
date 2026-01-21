@@ -27,37 +27,33 @@ struct MainTabView: View {
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }
     
-    func deneme(String: String) {
-        print(String)
-    }
-    
     var body: some View {
         TabView {
-            // 1. Anasayfa
+            // Home
             FeedView()
                 .tabItem {
                     Image(systemName: "house")
                 }
             
-            // 2. Keşfet
+            // Explore
             ExploreView()
                 .tabItem {
                     Image(systemName: "magnifyingglass")
                 }
             
-            // 3. Stüdyolar / Harita
+            // Studios / Map
             StudioView()
                 .tabItem {
                     Image(systemName: "map")
                 }
             
-            // 4. Mesajlar
+            // Messages
             InboxView()
                 .tabItem {
                     Image(systemName: "bubble.left.and.bubble.right")
                 }
             
-            // 5. Profil
+            // Profile
             RootProfileView()
                 .tabItem {
                     Image(systemName: "person")

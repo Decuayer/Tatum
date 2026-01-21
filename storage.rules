@@ -1,0 +1,70 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check file size (in bytes)
+    function isValidSize(maxSize) {
+      return request.resource.size <= maxSize;
+    }
+    
+    // Helper function to check if file is an image
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // Profile images
+    match /profile_images/{userId}/{fileName} {
+      // Anyone can read profile images
+      allow read: if true;
+      
+      // Only the user can upload/update their profile image
+      // Max size: 5MB
+      allow write: if isAuthenticated() &&
+                     request.auth.uid == userId &&
+                     isImage() &&
+                     isValidSize(5 * 1024 * 1024);
+    }
+    
+    // Post images
+    match /post_images/{userId}/{fileName} {
+      // Anyone can read post images (for public feed)
+      allow read: if true;
+      
+      // Only authenticated users can upload posts
+      // Max size: 10MB (for high-quality tattoo photos)
+      allow write: if isAuthenticated() &&
+                     request.auth.uid == userId &&
+                     isImage() &&
+                     isValidSize(10 * 1024 * 1024);
+    }
+    
+    // Studio images
+    match /studio_images/{studioId}/{fileName} {
+      // Anyone can read studio images
+      allow read: if true;
+      
+      // Only authenticated users can upload studio images
+      // Max size: 10MB
+      allow write: if isAuthenticated() &&
+                     isImage() &&
+                     isValidSize(10 * 1024 * 1024);
+    }
+    
+    // Chat/Message media
+    match /chat_media/{chatId}/{fileName} {
+      // Only participants can read chat media
+      allow read: if isAuthenticated();
+      
+      // Only authenticated users can upload chat media
+      // Max size: 5MB
+      allow write: if isAuthenticated() &&
+                     isImage() &&
+                     isValidSize(5 * 1024 * 1024);
+    }
+  }
+}

@@ -5,16 +5,19 @@
 //  Created by Demir Cücü on 21.12.2025.
 //
 
+#if DEBUG
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth
 
+/// Test data manager for development/testing only
+/// WARNING: This class should NEVER be available in production builds
 class TestDataManager {
     static let shared = TestDataManager()
     
     func createTestUsers(completion: @escaping (String, Int, Int) -> Void) {
         guard let currentUid = Auth.auth().currentUser?.uid else {
-            completion("Hata: Giriş yapmış kullanıcı yok.", 0, 0)
+            completion("Error: No logged in user.", 0, 0)
             return
         }
         
@@ -55,7 +58,7 @@ class TestDataManager {
                 "fullName": "Atlas Tattoo Studio",
                 "email": "atlas@test.com",
                 "role": "artist",
-                "bio": "Profesyonel minimal dövme stüdyosu. Kadıköy.",
+                "bio": "Professional minimal tattoo studio. Kadıköy.",
                 "website": "www.atlastattoo.com",
                 "phoneNumber": "+90 532 000 00 00",
                 "profileImageUrl": "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/d6dfcb29775387.5602fe2490841.jpg"
@@ -69,7 +72,7 @@ class TestDataManager {
                 "fullName": "Selin Yılmaz",
                 "email": "selin@test.com",
                 "role": "member",
-                "bio": "Dövme tutkunu.",
+                "bio": "Tattoo enthusiast.",
                 "profileImageUrl": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80"
             ]
             batch.setData(memberData, forDocument: memberRef)
@@ -93,22 +96,22 @@ class TestDataManager {
             
             batch.commit { error in
                 if let error = error {
-                    completion("Hata: \(error.localizedDescription)", 0, 0)
+                    completion("Error: \(error.localizedDescription)", 0, 0)
                 } else {
-                    var message = "Test Verileri Güncellendi."
+                    var message = "Test Data Updated."
                     var addedFollowersCount = 0
                     
                     if shouldAddAtlasAsFollower {
-                        message += " Atlas takip etti."
+                        message += " Atlas followed."
                         addedFollowersCount += 1
                     }
                     if shouldAddSelinAsFollower {
-                        message += " Selin takip etti."
+                        message += " Selin followed."
                         addedFollowersCount += 1
                     }
                     
                     if !shouldAddAtlasAsFollower && !shouldAddSelinAsFollower {
-                        message += " (Zaten Takipçiler)"
+                        message += " (Already followers)"
                     }
                     
                     completion(message, addedFollowersCount, 0)
@@ -117,3 +120,4 @@ class TestDataManager {
         }
     }
 }
+#endif
