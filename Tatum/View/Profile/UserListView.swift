@@ -7,6 +7,8 @@ struct UserListView: View {
     @Environment(\.dismiss) var dismiss
     let title: String
     
+    @State private var selectedUser: TatumUser?
+    
     init(uid: String, type: UserListType, title: String) {
         _viewModel = StateObject(wrappedValue: UserListViewModel(uid: uid, type: type))
         self.title = title
@@ -15,57 +17,68 @@ struct UserListView: View {
     var body: some View {
         ZStack {
             Color("BackgroundDark").ignoresSafeArea()
-            
-            if viewModel.users.isEmpty {
-                Text("No users found.")
-                    .foregroundColor(.gray)
-                    .padding(.top, 50)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(viewModel.users) { user in
-                            NavigationLink(destination: TatumProfileView(user: user)) {
+            VStack(spacing: 0) {
+                customNavBar
+
+                
+                if viewModel.users.isEmpty {
+                    Spacer()
+                    Text("No users found.")
+                        .foregroundColor(.gray)
+                        .padding(.top, 50)
+                    Spacer()
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(viewModel.users) { user in
                                 UserRow(
                                     user: user,
-                                    listType: viewModel.listType,
-                                    onAction: {
-                                        handleAction(for: user)
+                                    isFollowing: viewModel.isFollowing(userId: user.id),
+                                    isLoading: viewModel.isLoading(userId: user.id),
+                                    isCurrentUser: user.id == authViewModel.currentUser?.id,
+                                    onFollowToggle: {
+                                        viewModel.toggleFollow(for: user)
+                                    },
+                                    onTap: {
+                                        selectedUser = user
                                     }
                                 )
                             }
-                            .buttonStyle(.plain)
+                            
+                            // Hidden NavigationLink that activates programmatically
+                            NavigationLink(
+                                destination: Group {
+                                    if let user = selectedUser {
+                                        TatumProfileView(user: user)
+                                    }
+                                },
+                                isActive: Binding(
+                                    get: { selectedUser != nil },
+                                    set: { if !$0 { selectedUser = nil } }
+                                )
+                            ) {
+                                EmptyView()
+                            }
                         }
+                        .padding()
                     }
-                    .padding()
                 }
             }
+            
+            
         }
-        .navigationTitle(title)
+        .navigationBarHidden(true)
         
-    }
-    
-    func handleAction(for user: TatumUser) {
-        viewModel.performAction(for: user) { success in
-            if success {
-                DispatchQueue.main.async {
-                    if var currentUser = authViewModel.currentUser {
-                        if viewModel.listType == .followers {
-                            currentUser.followersCount = max(0, currentUser.followersCount - 1)
-                        } else {
-                            currentUser.followingCount = max(0, currentUser.followingCount - 1)
-                        }
-                        authViewModel.currentUser = currentUser
-                    }
-                }
-            }
-        }
     }
 }
 
 struct UserRow: View {
     let user: TatumUser
-    let listType: UserListType
-    var onAction: () -> Void
+    let isFollowing: Bool
+    let isLoading: Bool
+    let isCurrentUser: Bool
+    var onFollowToggle: () -> Void
+    var onTap: () -> Void
     
     var body: some View {
         HStack(spacing: 12) {
@@ -95,25 +108,67 @@ struct UserRow: View {
             
             Spacer()
             
-            Button(action: {
-                onAction()
-            }) {
-                Text(listType == .followers ? "Remove" : "Unfollow")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color("CardDark"))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    )
+            // Don't show follow button for current user
+            if !isCurrentUser {
+                Button(action: {
+                    onFollowToggle()
+                }) {
+                    if isLoading {
+                        ProgressView()
+                            .tint(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                    } else {
+                        Text(isFollowing ? "Unfollow" : "Follow")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(isFollowing ? Color("CardDark") : Color("BrandPurple"))
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: isFollowing ? 1 : 0)
+                            )
+                    }
+                }
             }
         }
         .padding()
         .background(Color("CardDark").opacity(0.5))
         .cornerRadius(12)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
+        }
+    }
+}
+
+
+extension UserListView {
+    private var customNavBar: some View {
+        ZStack {
+            Text(title)
+                .font(.custom("Poppins-Bold", size: 20))
+                .foregroundColor(.white)
+            
+            HStack {
+                Button(action: { dismiss() }) {
+                    Image(systemName: "arrow.left")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .padding(12)
+                        .background(Color("CardDark"))
+                        .clipShape(Circle())
+                }
+                
+                Spacer()
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 10)
+        
+        
     }
 }

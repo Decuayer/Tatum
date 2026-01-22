@@ -8,7 +8,7 @@ struct TatumUser: Identifiable, Codable, Hashable, Sendable {
     let username: String
     var fullName: String
     var profileImageUrl: String?
-    var role: String
+    var role: String  // Stored as String for Firestore compatibility
     var bio: String?
     var website: String?
     var phoneNumber: String?
@@ -46,9 +46,44 @@ struct TatumUser: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
+// MARK: - Role System
+extension TatumUser {
+    /// Type-safe role accessor
+    var userRole: UserRole {
+        UserRole(rawValue: role) ?? .member
+    }
+    
+    /// Whether this user can create posts
+    var canPost: Bool {
+        userRole.canPost
+    }
+    
+    /// Whether this user is an artist (includes studio employees)
+    var isArtist: Bool {
+        userRole == .artist || userRole == .studioEmployee
+    }
+    
+    /// Whether this user is a studio account
+    var isStudio: Bool {
+        userRole == .studio
+    }
+    
+    /// Whether this user is a regular member
+    var isMember: Bool {
+        userRole == .member
+    }
+    
+    /// Whether this user can have a studio affiliation
+    var canHaveStudioAffiliation: Bool {
+        userRole.canHaveStudioAffiliation
+    }
+}
+
+// MARK: - Current User Check
 extension TatumUser {
     var isCurrentUser: Bool {
         guard let currentUid = Auth.auth().currentUser?.uid else { return false }
         return id == currentUid
     }
 }
+

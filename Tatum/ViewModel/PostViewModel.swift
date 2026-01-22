@@ -1,5 +1,5 @@
 //
-//  PostDetailViewModel.swift
+//  PostViewModel.swift
 //  Tatum
 //
 //  Created by Demir Cücü on 22.12.2025.
@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-class PostDetailViewModel: ObservableObject {
+class PostViewModel: ObservableObject {
     @Published var post: Post
     @Published var isLiked = false
     @Published var likesCount = 0

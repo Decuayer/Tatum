@@ -18,7 +18,7 @@ class DevPostViewModel: ObservableObject {
     @Published var isUploading = false
     @Published var uploadStatusMessage = ""
     
-    // Galeriden seçilen item'ı UIImage'a çevirir
+    // Load selected photo from gallery and convert to UIImage
     func loadImage() async {
         guard let item = selectedItem else { return }
         guard let data = try? await item.loadTransferable(type: Data.self) else { return }
@@ -29,28 +29,28 @@ class DevPostViewModel: ObservableObject {
         }
     }
     
-    // Postu Yükle
+    // Upload the post
     func uploadDevPost() {
         guard let image = selectedImage else {
-            uploadStatusMessage = "Lütfen önce bir resim seç."
+            uploadStatusMessage = "Please select an image first."
             return
         }
         
         isUploading = true
-        uploadStatusMessage = "Yükleniyor..."
+        uploadStatusMessage = "Uploading..."
         
-        // Rastgele bir açıklama oluştur
-        let randomCaptions = ["Harika bir dövme çalışması!", "Yeni tasarımım.", "Minimalist art.", "Tatum ile sanat.", "Blackwork style."]
+        // Generate random caption
+        let randomCaptions = ["Amazing tattoo work!", "My new design.", "Minimalist art.", "Art with Tatum.", "Blackwork style."]
         let caption = randomCaptions.randomElement() ?? "My cool tattoo"
         
         PostService.uploadPost(caption: caption, image: image) { success in
             DispatchQueue.main.async {
                 self.isUploading = false
                 if success {
-                    self.uploadStatusMessage = "✅ Başarılı! Post yüklendi."
-                    self.selectedImage = nil // Resmi temizle
+                    self.uploadStatusMessage = "✅ Success! Post uploaded."
+                    self.selectedImage = nil
                 } else {
-                    self.uploadStatusMessage = "❌ Hata oluştu."
+                    self.uploadStatusMessage = "❌ Error occurred."
                 }
             }
         }

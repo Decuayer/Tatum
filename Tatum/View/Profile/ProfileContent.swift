@@ -1,28 +1,20 @@
-//
-//  TatumProfileView.swift
-//  Tatum
-//
-//  Created by Demir Cücü on 21.01.2026.
-//
-
 import SwiftUI
 import SDWebImageSwiftUI
 
-struct TatumProfileView: View {
+struct ProfileContent: View {
+    let user: TatumUser
+    @StateObject var viewModel: TatumProfileViewModel
+    @Binding var selectedTab: String
+    @Binding var showSettings: Bool
+    @Binding var showEditProfile: Bool
     @EnvironmentObject var authViewModel: AuthViewModel
     
-    @StateObject var viewModel: TatumProfileViewModel
-    @Environment(\.dismiss) var dismiss
-    
-    @State private var selectedTab = "Portfolio"
-    @State private var showSettings = false
-    @State private var showEditProfile = false
-    @State private var showChat = false
-    
-    
-    init(user: TatumUser) {
+    init(user: TatumUser, selectedTab: Binding<String>, showSettings: Binding<Bool>, showEditProfile: Binding<Bool>) {
+        self.user = user
         _viewModel = StateObject(wrappedValue: TatumProfileViewModel(user: user))
-        _selectedTab = State(initialValue: user.isArtist ? "Portfolio" : "Likes")
+        _selectedTab = selectedTab
+        _showSettings = showSettings
+        _showEditProfile = showEditProfile
     }
     
     var body: some View {
@@ -65,7 +57,7 @@ struct TatumProfileView: View {
                 }
         }
         .onAppear {
-            print("DEBUG: ProfileView has appeared, data is being refreshed.")
+            print("DEBUG: ProfileContent has appeared, data is being refreshed.")
             
             viewModel.loadUserData()
             
@@ -78,8 +70,8 @@ struct TatumProfileView: View {
     }
 }
 
-
-extension TatumProfileView {
+// MARK: - Components
+extension ProfileContent {
     
     private var customNavBar: some View {
         ZStack {
@@ -88,18 +80,7 @@ extension TatumProfileView {
                 .foregroundColor(.white)
             
             HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "arrow.left")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .padding(12)
-                        .background(Color("CardDark"))
-                        .clipShape(Circle())
-                }
-                
-                
                 Spacer()
-                
                 
                 if viewModel.user.isCurrentUser {
                     Button(action: { showSettings.toggle() }) {
@@ -109,7 +90,6 @@ extension TatumProfileView {
                     }
                 } else {
                     Button(action: {
-                        // TODO: Show options menu
                         print("User more")
                     }) {
                         Image(systemName: "ellipsis")
@@ -118,7 +98,6 @@ extension TatumProfileView {
                     }
                 }
             }
-            
         }
         .padding(.horizontal)
         .padding(.top, 10)
@@ -192,7 +171,6 @@ extension TatumProfileView {
             .padding(.horizontal)
         }
         .padding(.horizontal)
-        
     }
     
     private var actionButtons: some View {
@@ -293,13 +271,8 @@ extension TatumProfileView {
         let dataSource = (selectedTab == "Portfolio") ? viewModel.posts : viewModel.likedPosts
         
         return LazyVGrid(columns: columns, spacing: 2) {
-            
             if dataSource.isEmpty {
-                // TODO
-                // Grid içinde VStack olmaz, bu yüzden section veya dışarıda kontrol etmek daha iyidir ama
-                // basitlik için buraya dummy bir view koyabiliriz veya boş bırakabiliriz.
-                // Şimdilik boş bırakıyoruz, kullanıcı grid boş görecek.
-                // İstersen buraya bir "No posts yet" yazısı ekleyebiliriz ama Grid yapısını bozabilir.
+                // Empty state handled by grid being empty
             } else {
                 ForEach(dataSource) { post in
                     let postOwner = post.user ?? viewModel.user

@@ -38,6 +38,14 @@ class FeedViewModel: ObservableObject {
         
         group.notify(queue: .main) {
             self.isLoading = false
+            self.testPosts()
+        }
+    }
+    
+    func testPosts() {
+        print("--- TEST SUGGESTED POSTS ---")
+        suggestedPosts.forEach { post in
+            print("ID: \(post.id) - Caption: \(post.caption) - Owner: \(post.ownerUid)")
         }
     }
 }

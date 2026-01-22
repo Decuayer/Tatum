@@ -44,7 +44,7 @@ struct ChatView: View {
             
             inputBar
         }
-        .background(Color("BackgroundDark").ignoresSafeArea())
+        .background(Color("CardDark").ignoresSafeArea())
         .navigationBarHidden(true)
     }
     
@@ -52,8 +52,11 @@ struct ChatView: View {
         HStack(spacing: 12) {
             Button(action: { dismiss() }) {
                 Image(systemName: "arrow.left")
+                    .font(.title2)
                     .foregroundColor(.white)
-                    .padding(8)
+                    .padding(12)
+                    .background(Color("CardDark"))
+                    .clipShape(Circle())
             }
             
             if let img = viewModel.toUser.profileImageUrl, !img.isEmpty {
@@ -77,7 +80,7 @@ struct ChatView: View {
             Spacer()
         }
         .padding()
-        .background(Color("CardDark"))
+        .background(Color("BackgroundDark"))
     }
     
     private var inputBar: some View {

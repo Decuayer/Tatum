@@ -1,8 +1,8 @@
 import SwiftUI
 import SDWebImageSwiftUI
 
-struct PostDetailView: View {
-    @StateObject var viewModel: PostDetailViewModel
+struct PostView: View {
+    @StateObject var viewModel: PostViewModel
     let user: TatumUser
     @Environment(\.dismiss) var dismiss
     
@@ -10,7 +10,7 @@ struct PostDetailView: View {
     
     init(post: Post, user: TatumUser) {
         self.user = user
-        _viewModel = StateObject(wrappedValue: PostDetailViewModel(post: post))
+        _viewModel = StateObject(wrappedValue: PostViewModel(post: post))
     }
     
     var body: some View {
@@ -40,23 +40,36 @@ struct PostDetailView: View {
 }
 
 // MARK: - Components
-extension PostDetailView {
+extension PostView {
     
     private var customNavBar: some View {
-        HStack {
-            Button(action: { dismiss() }) {
-                Image(systemName: "arrow.left")
-                    .font(.title2)
+        VStack(spacing: 0) {
+            ZStack {
+                Text("Post")
+                    .font(.custom("Poppins-Bold", size: 20))
                     .foregroundColor(.white)
+                HStack {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "arrow.left")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .frame(width: 40, height: 40)
+                            .background(Color("CardDark"))
+                            .clipShape(Circle())
+                    }
+                    
+                    Spacer()
+                    
+                    
+                }
             }
-            Text("Post")
-                .font(.custom("Poppins-SemiBold", size: 18))
-                .foregroundColor(.white)
-                .padding(.leading, 8)
-            Spacer()
+            .padding(.horizontal)
+            .padding(.top, 12)
+            .padding(.bottom, 12)
+            
+            Divider()
+                .background(Color.white.opacity(0.2))
         }
-        .padding()
-        .background(Color("CardDark"))
     }
     
     private var postHeader: some View {
@@ -80,10 +93,17 @@ extension PostDetailView {
             
             Spacer()
             
-            Image(systemName: "ellipsis")
-                .foregroundColor(.white)
+            Button(action: {
+                // TODO: Show options menu
+                print("User more")
+            }) {
+                Image(systemName: "ellipsis")
+                    .foregroundColor(.white)
+            }
         }
-        .padding(12)
+        .padding(.horizontal)
+        .padding(.top, 12)
+        .padding(.bottom, 12)
         .contentShape(Rectangle())
     }
     
@@ -121,11 +141,14 @@ extension PostDetailView {
                         .font(.title2)
                 }
                 
-                Button(action: {}) {
-                    Image(systemName: "paperplane")
+                Spacer()
+                
+                Button(action: {
+                    // TODO: Implement save/unsave
+                }) {
+                    Image(systemName: "bookmark")
                         .font(.title2)
                 }
-                Spacer()
             }
             .foregroundColor(.white)
             .padding(.top, 8)

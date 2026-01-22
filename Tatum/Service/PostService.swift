@@ -27,7 +27,8 @@ struct PostService {
                 "caption": caption,
                 "likes": 0,
                 "imageUrl": imageUrl,
-                "timestamp": Timestamp(date: Date())
+                "timestamp": Timestamp(date: Date()),
+                "isPrivate": false  // Default to public
             ]
             
             Firestore.firestore().collection("posts").addDocument(data: data) { error in

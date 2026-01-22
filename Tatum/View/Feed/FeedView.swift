@@ -88,8 +88,7 @@ extension FeedView {
     
     private var feedSection: some View {
         ForEach(viewModel.feedPosts) { post in
-            FeedCell(post: post)
-                .padding(.bottom, 10)
+            FeedPostView(post: post)
         }
     }
     
@@ -111,8 +110,7 @@ extension FeedView {
             
             // Önerilen Postlar Listesi
             ForEach(viewModel.suggestedPosts) { post in
-                FeedCell(post: post)
-                    .padding(.bottom, 10)
+                FeedPostView(post: post)
             }
         }
     }

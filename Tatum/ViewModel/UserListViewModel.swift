@@ -15,6 +15,8 @@ enum UserListType {
 
 class UserListViewModel: ObservableObject {
     @Published var users: [TatumUser] = []
+    @Published var followStates: [String: Bool] = [:]  // userId: isFollowing
+    @Published var loadingStates: [String: Bool] = [:]  // userId: isLoading
     
     private let service: ProfileServiceProtocol
     let listType: UserListType
@@ -32,44 +34,64 @@ class UserListViewModel: ObservableObject {
         case .followers:
             service.fetchFollowers(uid: uid) { [weak self] users in
                 self?.users = users
+                self?.checkFollowStatesForAllUsers(users)
             }
         case .following:
             service.fetchFollowing(uid: uid) { [weak self] users in
                 self?.users = users
+                self?.checkFollowStatesForAllUsers(users)
             }
         }
     }
     
-    func performAction(for user: TatumUser, completion: @escaping (Bool) -> Void) {
-        // UI'dan hemen silmek için completion'ı beklemeden success dönebiliriz (Optimistic)
-        // Ama veri tutarlılığı için servisi beklemek daha güvenli.
+    
+    private func checkFollowStatesForAllUsers(_ users: [TatumUser]) {
+        // Her kullanıcı için aktif kullanıcının (current user) o kişiyi takip edip etmediğini kontrol et
+        for user in users {
+            loadingStates[user.id] = false
+            
+            // checkIfUserIsFollowed: Aktif kullanıcı bu user'ı takip ediyor mu?
+            service.checkIfUserIsFollowed(uid: user.id) { [weak self] isFollowed in
+                DispatchQueue.main.async {
+                    self?.followStates[user.id] = isFollowed
+                }
+            }
+        }
+    }
+    
+    func toggleFollow(for user: TatumUser) {
+        loadingStates[user.id] = true
         
-        if listType == .followers {
-            // Beni takip edeni çıkar
-            service.removeFollower(uid: user.id) { [weak self] error in
-                if error == nil {
-                    self?.removeUserFromList(id: user.id)
-                    completion(true)
-                } else {
-                    completion(false)
+        let isCurrentlyFollowing = followStates[user.id] ?? false
+        
+        if isCurrentlyFollowing {
+            // Unfollow
+            service.unfollow(uid: user.id) { [weak self] error in
+                DispatchQueue.main.async {
+                    self?.loadingStates[user.id] = false
+                    if error == nil {
+                        self?.followStates[user.id] = false
+                    }
                 }
             }
         } else {
-            // Takipten çık
-            service.unfollow(uid: user.id) { [weak self] error in
-                if error == nil {
-                    self?.removeUserFromList(id: user.id)
-                    completion(true)
-                } else {
-                    completion(false)
+            // Follow
+            service.follow(uid: user.id) { [weak self] error in
+                DispatchQueue.main.async {
+                    self?.loadingStates[user.id] = false
+                    if error == nil {
+                        self?.followStates[user.id] = true
+                    }
                 }
             }
         }
     }
     
-    private func removeUserFromList(id: String) {
-        DispatchQueue.main.async {
-            self.users.removeAll { $0.id == id }
-        }
+    func isFollowing(userId: String) -> Bool {
+        return followStates[userId] ?? false
+    }
+    
+    func isLoading(userId: String) -> Bool {
+        return loadingStates[userId] ?? false
     }
 }

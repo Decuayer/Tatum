@@ -19,7 +19,7 @@ struct ChatBubble: View {
                 .font(.custom("Poppins-Regular", size: 15))
                 .foregroundColor(.white)
                 .padding(12)
-                .background(isFromCurrentUser ? Color("BrandPurple") : Color("CardDark"))
+                .background(isFromCurrentUser ? Color("BrandPurple") : Color("BackgroundDark"))
                 .clipShape(ChatBubbleShape(isFromCurrentUser: isFromCurrentUser))
                 .containerRelativeFrame(.horizontal, count: 4, span: 3, spacing: 0, alignment: isFromCurrentUser ? .trailing : .leading)
             if !isFromCurrentUser { Spacer() }

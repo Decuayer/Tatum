@@ -6,9 +6,15 @@
 //
 
 import SwiftUI
+import SDWebImageSwiftUI
+
 
 struct RootProfileView : View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    
+    @State private var selectedTab = "Portfolio"
+    @State private var showSettings = false
+    @State private var showEditProfile = false
     
     var body: some View {
         NavigationView {
@@ -21,7 +27,12 @@ struct RootProfileView : View {
                             .tint(.white)
                     }
                 } else if let user = authViewModel.currentUser {
-                    TatumProfileView(user: user)
+                    ProfileContent(
+                        user: user, 
+                        selectedTab: $selectedTab, 
+                        showSettings: $showSettings, 
+                        showEditProfile: $showEditProfile
+                    )
                 } else {
                     VStack(spacing: 20) {
                         Image(systemName: "person.crop.circle.badge.exclamationmark")

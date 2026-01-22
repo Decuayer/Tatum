@@ -245,12 +245,12 @@ class ProfileService: ProfileServiceProtocol {
                     return Post(
                         id: doc.documentID,
                         ownerUid: data["ownerUid"] as? String ?? "",
-                        studioId: data["studioId"] as? String ?? "",
                         caption: data["caption"] as? String ?? "",
                         likes: data["likes"] as? Int ?? 0,
                         imageUrl: data["imageUrl"] as? String ?? "",
                         timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
-                        user: nil
+                        user: nil,
+                        studioId: data["studioId"] as? String
                     )
                 }
                 
@@ -315,12 +315,12 @@ class ProfileService: ProfileServiceProtocol {
                             return Post(
                                 id: doc.documentID,
                                 ownerUid: data["ownerUid"] as? String ?? "",
-                                studioId: data["studioId"] as? String ?? "",
                                 caption: data["caption"] as? String ?? "",
                                 likes: data["likes"] as? Int ?? 0,
                                 imageUrl: data["imageUrl"] as? String ?? "",
                                 timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
-                                user: nil
+                                user: nil,
+                                studioId: data["studioId"] as? String
                             )
                         }
                         allPosts.append(contentsOf: posts)

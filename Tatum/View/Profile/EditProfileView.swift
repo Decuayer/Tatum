@@ -20,87 +20,77 @@ struct EditProfileView: View {
         NavigationView {
             ZStack {
                 Color("BackgroundDark").ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(spacing: 24) {
-                        
-                        // 1. FOTOĞRAF DEĞİŞTİRME ALANI
-                        VStack(spacing: 12) {
-                            PhotosPicker(
-                                selection: $selectedItem,
-                                matching: .images,
-                                photoLibrary: .shared()
-                            ) {
-                                ZStack(alignment: .bottomTrailing) {
-                                    // A) Yeni seçilen fotoğraf varsa onu göster
-                                    if let selectedImageData, let uiImage = UIImage(data: selectedImageData) {
-                                        Image(uiImage: uiImage)
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 100, height: 100)
-                                            .clipShape(Circle())
-                                    }
-                                    // B) Yoksa mevcut internetteki fotoyu göster
-                                    else if let imageUrl = authViewModel.currentUser?.profileImageUrl {
-                                        WebImage(url: URL(string: imageUrl))
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 100, height: 100)
-                                            .clipShape(Circle())
-                                    }
-                                    // C) O da yoksa boş ikon göster
-                                    else {
-                                        Image(systemName: "person.circle.fill")
-                                            .resizable()
-                                            .foregroundColor(.gray)
-                                            .frame(width: 100, height: 100)
-                                    }
-                                    
-                                    // Düzenle İkonu (Rozet)
-                                    Image(systemName: "camera.fill")
-                                        .foregroundColor(.white)
-                                        .padding(6)
-                                        .background(Color("BrandPurple"))
-                                        .clipShape(Circle())
-                                        .overlay(Circle().stroke(Color("BackgroundDark"), lineWidth: 2))
-                                }
-                            }
+                VStack(spacing: 0) {
+                    customNavBar
+
+                    ScrollView {
+                        VStack(spacing: 24) {
                             
-                            Text("Change Profile Photo")
-                                .font(.custom("Poppins-Medium", size: 14))
-                                .foregroundColor(Color("BrandPurple"))
+                            // 1. FOTOĞRAF DEĞİŞTİRME ALANI
+                            VStack(spacing: 12) {
+                                PhotosPicker(
+                                    selection: $selectedItem,
+                                    matching: .images,
+                                    photoLibrary: .shared()
+                                ) {
+                                    ZStack(alignment: .bottomTrailing) {
+                                        // A) Yeni seçilen fotoğraf varsa onu göster
+                                        if let selectedImageData, let uiImage = UIImage(data: selectedImageData) {
+                                            Image(uiImage: uiImage)
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 100, height: 100)
+                                                .clipShape(Circle())
+                                        }
+                                        // B) Yoksa mevcut internetteki fotoyu göster
+                                        else if let imageUrl = authViewModel.currentUser?.profileImageUrl {
+                                            WebImage(url: URL(string: imageUrl))
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 100, height: 100)
+                                                .clipShape(Circle())
+                                        }
+                                        // C) O da yoksa boş ikon göster
+                                        else {
+                                            Image(systemName: "person.circle.fill")
+                                                .resizable()
+                                                .foregroundColor(.gray)
+                                                .frame(width: 100, height: 100)
+                                        }
+                                        
+                                        // Düzenle İkonu (Rozet)
+                                        Image(systemName: "camera.fill")
+                                            .foregroundColor(.white)
+                                            .padding(6)
+                                            .background(Color("BrandPurple"))
+                                            .clipShape(Circle())
+                                            .overlay(Circle().stroke(Color("BackgroundDark"), lineWidth: 2))
+                                    }
+                                }
+                                
+                                Text("Change Profile Photo")
+                                    .font(.custom("Poppins-Medium", size: 14))
+                                    .foregroundColor(Color("BrandPurple"))
+                            }
+                            .padding(.top, 20)
+                            
+                            // 2. INPUT ALANLARI
+                            VStack(spacing: 20) {
+                                EditProfileField(title: "Full Name", text: $fullname)
+                                EditProfileField(title: "Bio", text: $bio, isMultiLine: true)
+                                EditProfileField(title: "Website", text: $website)
+                                EditProfileField(title: "Phone Number", text: $phone)
+                            }
+                            .padding(.horizontal)
+                            
+                            Spacer()
                         }
-                        .padding(.top, 20)
-                        
-                        // 2. INPUT ALANLARI
-                        VStack(spacing: 20) {
-                            EditProfileField(title: "Full Name", text: $fullname)
-                            EditProfileField(title: "Bio", text: $bio, isMultiLine: true)
-                            EditProfileField(title: "Website", text: $website)
-                            EditProfileField(title: "Phone Number", text: $phone)
-                        }
-                        .padding(.horizontal)
-                        
-                        Spacer()
                     }
-                }
-            }
-            .navigationTitle("Edit Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
-                        .foregroundColor(.white)
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveProfileChanges()
-                    }
-                    .font(.custom("Poppins-Bold", size: 16))
-                    .foregroundColor(Color("BrandPurple"))
-                }
+                
             }
+            .navigationBarHidden(true)
             // Sayfa açıldığında mevcut verileri doldur
             .onAppear {
                 loadUserData()
@@ -177,5 +167,39 @@ struct EditProfileField: View {
                     .cornerRadius(12)
             }
         }
+    }
+}
+
+extension EditProfileView {
+    private var customNavBar: some View {
+        ZStack {
+            Text("Edit Profile")
+                .font(.custom("Poppins-Bold", size: 20))
+                .foregroundColor(.white)
+            
+            HStack {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .font(.custom("Poppins-Bold", size: 16))
+                .padding(12)
+                .background(Color("CardDark"))
+                .cornerRadius(20)
+                .foregroundColor(.white)
+                
+                Spacer()
+                
+                Button("Save") {
+                    saveProfileChanges()
+                }
+                .font(.custom("Poppins-Bold", size: 16))
+                .foregroundColor(Color("BrandPurple"))
+                .padding(12)
+                .background(Color("CardDark"))
+                .cornerRadius(20)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 16)
     }
 }

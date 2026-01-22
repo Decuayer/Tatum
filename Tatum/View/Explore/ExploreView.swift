@@ -2,20 +2,21 @@
 //  ExploreView.swift
 //  Tatum
 //
-//  Created by Demir Cücü on 19.12.2025.
+//  Discovery/Explore page with infinite scroll grid and category filters
 //
 
 import SwiftUI
 import SDWebImageSwiftUI
 
 struct ExploreView: View {
-    @State private var searchText = ""
-    @State private var selectedCategory: String = "All"
+    @StateObject private var viewModel = ExploreViewModel()
+    @State private var showMapView = false
     
-    // Grid Düzeni: 2 Sütunlu esnek yapı
+    // 3-column grid for compact post display
     let columns = [
-        GridItem(.flexible(), spacing: 10),
-        GridItem(.flexible(), spacing: 10)
+        GridItem(.flexible(), spacing: 2),
+        GridItem(.flexible(), spacing: 2),
+        GridItem(.flexible(), spacing: 2)
     ]
     
     var body: some View {
@@ -25,50 +26,148 @@ struct ExploreView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // 1. Arama Çubuğu
-                    CustomSearchBar(text: $searchText)
-                        .padding(.top, 10)
-                        .padding(.bottom, 10)
+                    // Custom header with search and map toggle
+                    headerView
                     
-                    // 2. Kategoriler (Yatay Kaydırma)
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 15) {
-                            ForEach(sampleCategories) { category in
-                                CategoryPill(
-                                    title: category.title,
-                                    isSelected: selectedCategory == category.title
-                                )
-                                .onTapGesture {
-                                    withAnimation {
-                                        selectedCategory = category.title
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.bottom, 15)
-                    }
+                    // Category filter pills
+                    categoryFilters
                     
-                    // 3. Grid Stracture
-                    ScrollView {
-                        LazyVGrid(columns: columns, spacing: 15) {
-                            // Şimdilik 20 tane rastgele görsel koyuyoruz
-                            ForEach(0..<20, id: \.self) { index in
-                                NavigationLink(destination: Text("Detail View for Image \(index)")) {
-                                    ExploreGridItem(imageName: "TestTattoo1")
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.bottom, 20)
+                    // Posts grid
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .padding(.top, 50)
+                            .tint(.white)
+                    } else if viewModel.filteredPosts.isEmpty {
+                        emptyStateView
+                    } else {
+                        postsGrid
                     }
                 }
             }
-            .navigationBarHidden(true) // Üstteki standart navigation bar'ı gizliyoruz
+            .navigationBarHidden(true)
+        }
+        .onAppear {
+            if viewModel.posts.isEmpty {
+                viewModel.fetchPosts()
+            }
         }
     }
 }
 
+// MARK: - Components
+extension ExploreView {
+    
+    private var headerView: some View {
+        HStack {
+            // Search icon
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+                .font(.title3)
+            
+            // Search field
+            TextField("Search tattoos...", text: $viewModel.searchText)
+                .font(.custom("Poppins-Regular", size: 16))
+                .foregroundColor(.white)
+                .autocapitalization(.none)
+            
+            if !viewModel.searchText.isEmpty {
+                Button(action: {
+                    viewModel.searchText = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+            }
+            
+            // Map toggle button
+            Button(action: {
+                showMapView.toggle()
+            }) {
+                Image(systemName: showMapView ? "squareshape.split.3x3" : "map")
+                    .font(.title3)
+                    .foregroundColor(Color("BrandPurple"))
+                    .padding(8)
+                    .background(Color("CardDark"))
+                    .cornerRadius(8)
+            }
+        }
+        .padding()
+        .background(Color("CardDark"))
+    }
+    
+    private var categoryFilters: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                // "All" category
+                CategoryPill(
+                    title: "All",
+                    isSelected: viewModel.selectedCategory == nil
+                )
+                .onTapGesture {
+                    viewModel.selectCategory(nil)
+                }
+                
+                // Tattoo categories
+                ForEach(TattooCategory.allCases, id: \.self) { category in
+                    CategoryPill(
+                        title: category.displayName,
+                        isSelected: viewModel.selectedCategory == category
+                    )
+                    .onTapGesture {
+                        viewModel.selectCategory(category)
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+        }
+    }
+    
+    private var postsGrid: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 2) {
+                ForEach(viewModel.filteredPosts) { post in
+                    NavigationLink(destination: PostView(post: post, user: post.user ?? TatumUser(id: post.ownerUid, email: "", username: "User", fullName: "User", profileImageUrl: nil, role: "member", bio: nil, website: nil, phoneNumber: nil, studioId: nil, followersCount: 0, followingCount: 0))) {
+                        PostGridItem(post: post)
+                    }
+                }
+            }
+            .padding(.bottom, 20)
+        }
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "photo.on.rectangle.angled")
+                .font(.system(size: 60))
+                .foregroundColor(.gray)
+            
+            Text("No posts found")
+                .font(.custom("Poppins-SemiBold", size: 18))
+                .foregroundColor(.white)
+            
+            Text("Try adjusting your filters")
+                .font(.custom("Poppins-Regular", size: 14))
+                .foregroundColor(.gray)
+            
+            Button(action: {
+                viewModel.clearFilters()
+            }) {
+                Text("Clear Filters")
+                    .font(.custom("Poppins-Medium", size: 14))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Color("BrandPurple"))
+                    .cornerRadius(8)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Category Pill Component
 struct CategoryPill: View {
     let title: String
     let isSelected: Bool
@@ -77,11 +176,9 @@ struct CategoryPill: View {
         Text(title)
             .font(.custom("Poppins-Medium", size: 14))
             .foregroundColor(isSelected ? .white : .gray)
-            .padding(.vertical, 10)
-            .padding(.horizontal, 20)
-            .background(
-                isSelected ? Color("BrandPurple") : Color("CardDark")
-            )
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .background(isSelected ? Color("BrandPurple") : Color("CardDark"))
             .cornerRadius(20)
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
@@ -90,29 +187,26 @@ struct CategoryPill: View {
     }
 }
 
-struct ExploreGridItem: View {
-    let imageName: String
+// MARK: - Post Grid Item Component
+struct PostGridItem: View {
+    let post: Post
     
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            // Dövme Fotoğrafı
-            Image(imageName) // Şimdilik Assets'ten, sonra URL'den gelecek
+        WebImage(url: URL(string: post.imageUrl)) { image in
+            image
                 .resizable()
                 .scaledToFill()
-                .frame(height: 200) // Yükseklik sabit veya dinamik olabilir
-                .clipped()
-                .cornerRadius(12)
-            
-            // Üzerindeki hafif karartma (yazı okunsun diye)
-            LinearGradient(gradient: Gradient(colors: [.clear, .black.opacity(0.7)]), startPoint: .center, endPoint: .bottom)
-                .cornerRadius(12)
-            
-            // Sanatçı ismi vs. (Opsiyonel)
-            Text("Artist Name")
-                .font(.custom("Poppins-Regular", size: 12))
-                .foregroundColor(.white)
-                .padding(8)
+        } placeholder: {
+            Rectangle()
+                .foregroundColor(.gray.opacity(0.2))
         }
+        .indicator(.activity)
+        .frame(width: gridItemWidth, height: gridItemWidth)
+        .clipped()
+    }
+    
+    private var gridItemWidth: CGFloat {
+        (UIScreen.main.bounds.width - 4) / 3  // 3 columns with 2px spacing
     }
 }
 

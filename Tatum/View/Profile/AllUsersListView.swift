@@ -38,10 +38,6 @@ struct AllUsersListView: View {
         .navigationTitle("All Users Database")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button("Close") { dismiss() }
-                    .foregroundColor(.white)
-            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Text("\(viewModel.users.count) Users")
                     .font(.caption)
@@ -81,7 +77,7 @@ struct AdminUserRow: View {
                             Text(user.username)
                                 .font(.custom("Poppins-SemiBold", size: 14))
                                 .foregroundColor(.white)
-                            if user.role == "artist" {
+                            if user.isArtist {
                                 Image(systemName: "paintbrush.fill")
                                     .font(.caption2)
                                     .foregroundColor(Color("BrandPurple"))
