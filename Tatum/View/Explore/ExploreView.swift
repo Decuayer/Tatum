@@ -127,7 +127,7 @@ extension ExploreView {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 2) {
                 ForEach(viewModel.filteredPosts) { post in
-                    NavigationLink(destination: PostView(post: post, user: post.user ?? TatumUser(id: post.ownerUid, email: "", username: "User", fullName: "User", profileImageUrl: nil, role: "member", bio: nil, website: nil, phoneNumber: nil, studioId: nil, followersCount: 0, followingCount: 0))) {
+                    NavigationLink(destination: PostView(post: post)) {
                         PostGridItem(post: post)
                     }
                 }

@@ -8,7 +8,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct Post: Identifiable, Codable, Hashable {
+struct Post: Identifiable, Codable, Hashable, Sendable {
     @DocumentID var id: String?
     let ownerUid: String
     let caption: String
@@ -32,8 +32,8 @@ struct Post: Identifiable, Codable, Hashable {
     var artistUid: String?           // If studio post, which artist did it
     var artistName: String?          // Denormalized artist name
     
-    init(id: String?, ownerUid: String, caption: String, likes: Int, imageUrl: String, timestamp: Date, user: TatumUser?, studioId: String? = nil, studioName: String? = nil, categories: [String]? = nil, bodyPlacement: String? = nil, isPrivate: Bool? = nil, artistUid: String? = nil, artistName: String? = nil) {
-        self.id = id
+    init(id: String? = nil, ownerUid: String, caption: String, likes: Int, imageUrl: String, timestamp: Date, user: TatumUser? = nil, studioId: String? = nil, studioName: String? = nil, categories: [String]? = nil, bodyPlacement: String? = nil, isPrivate: Bool? = nil, artistUid: String? = nil, artistName: String? = nil) {
+        // NOTE: @DocumentID (id) is managed by Firestore - don't assign it manually
         self.ownerUid = ownerUid
         self.caption = caption
         self.likes = likes

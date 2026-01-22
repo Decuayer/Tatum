@@ -7,12 +7,12 @@
 
 import SwiftUI
 import SDWebImageSwiftUI
-import FirebaseFirestore
 
 struct FeedPostView: View {
     @StateObject var viewModel: PostViewModel
-    @State private var user: TatumUser?
     @State private var showComments = false
+    @State private var selectedUser: TatumUser?
+    @EnvironmentObject var authViewModel: AuthViewModel
     
     init(post: Post) {
         self._viewModel = StateObject(wrappedValue: PostViewModel(post: post))
@@ -22,6 +22,7 @@ struct FeedPostView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Header - Profile & Username
             postHeader
+                .zIndex(1)
             
             // Post Image
             postImage
@@ -48,15 +49,27 @@ struct FeedPostView: View {
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
         }
-        .padding(.bottom, 20)
-        .onAppear {
-            fetchUser()
+        .onAppear() {
+            viewModel.refresh()
         }
+        .padding(.bottom, 20)
         .sheet(isPresented: $showComments) {
-            CommentsView(post: viewModel.post)
+            CommentsView(post: viewModel.post, selectedUser: $selectedUser)
+                .environmentObject(authViewModel)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .background(
+            NavigationLink(
+                destination: selectedUser.map { TatumProfileView(user: $0) },
+                isActive: Binding(
+                    get: { selectedUser != nil },
+                    set: { if !$0 { selectedUser = nil } }
+                )
+            ) {
+                EmptyView()
+            }
+        )
     }
 }
 
@@ -65,7 +78,7 @@ extension FeedPostView {
     
     private var postHeader: some View {
         HStack {
-            if let user = user {
+            if let user = viewModel.postOwner {
                 // Profile Image
                 NavigationLink(destination: TatumProfileView(user: user)) {
                     WebImage(url: URL(string: user.profileImageUrl ?? "")) { image in
@@ -81,7 +94,6 @@ extension FeedPostView {
                 }
                 .buttonStyle(.plain)
                 
-                // Username & Studio Tag
                 NavigationLink(destination: TatumProfileView(user: user)) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(user.username)
@@ -104,10 +116,9 @@ extension FeedPostView {
             
             Spacer()
             
-            // More Options Button
             Button(action: {
-                // TODO: Show options menu
-                print("User more")
+                // TODO: Show post options menu
+                print("TODO: Show Post Options Menu")
 
             }) {
                 Image(systemName: "ellipsis")
@@ -119,7 +130,7 @@ extension FeedPostView {
     }
     
     private var postImage: some View {
-        NavigationLink(destination: PostView(post: viewModel.post, user: user ?? createFallbackUser())) {
+        NavigationLink(destination: PostView(post: viewModel.post)) {
             Color.clear
                 .frame(height: 400)
                 .frame(maxWidth: .infinity)
@@ -145,7 +156,6 @@ extension FeedPostView {
     
     private var actionButtons: some View {
         HStack(spacing: 16) {
-            // Like Button
             Button(action: {
                 viewModel.isLiked ? viewModel.unlikePost() : viewModel.likePost()
             }) {
@@ -156,7 +166,6 @@ extension FeedPostView {
                     .animation(.spring(), value: viewModel.isLiked)
             }
             
-            // Comment Button
             Button(action: {
                 showComments.toggle()
             }) {
@@ -167,9 +176,9 @@ extension FeedPostView {
             
             Spacer()
             
-            // Save Button
             Button(action: {
-                // TODO: Implement save functionality
+                // TODO: Implement save/unsave post
+                print("TODO: Save/Unsave Post")
             }) {
                 Image(systemName: "bookmark")
                     .font(.title2)
@@ -182,7 +191,7 @@ extension FeedPostView {
     
     private var captionView: some View {
         HStack(alignment: .top) {
-            if let user = user {
+            if let user = viewModel.postOwner {
                 Text(user.username)
                     .font(.custom("Poppins-Bold", size: 14))
                     .foregroundColor(.white)
@@ -195,37 +204,4 @@ extension FeedPostView {
         .padding(.top, 4)
     }
     
-    // MARK: - Helper Functions
-    
-    private func fetchUser() {
-        Firestore.firestore()
-            .collection("users")
-            .document(viewModel.post.ownerUid)
-            .getDocument { snapshot, error in
-                if let error = error {
-                    print("DEBUG: Error fetching post owner - \(error.localizedDescription)")
-                    return
-                }
-                
-                guard let data = snapshot?.data() else { return }
-                self.user = TatumUser(data: data)
-            }
-    }
-    
-    private func createFallbackUser() -> TatumUser {
-        TatumUser(
-            id: viewModel.post.ownerUid,
-            email: "",
-            username: "User",
-            fullName: "User",
-            profileImageUrl: nil,
-            role: "member",
-            bio: nil,
-            website: nil,
-            phoneNumber: nil,
-            studioId: nil,
-            followersCount: 0,
-            followingCount: 0
-        )
-    }
 }

@@ -240,19 +240,7 @@ class ProfileService: ProfileServiceProtocol {
                     return
                 }
                 
-                let posts = documents.compactMap { doc -> Post? in
-                    let data = doc.data()
-                    return Post(
-                        id: doc.documentID,
-                        ownerUid: data["ownerUid"] as? String ?? "",
-                        caption: data["caption"] as? String ?? "",
-                        likes: data["likes"] as? Int ?? 0,
-                        imageUrl: data["imageUrl"] as? String ?? "",
-                        timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
-                        user: nil,
-                        studioId: data["studioId"] as? String
-                    )
-                }
+                let posts = documents.compactMap { try? $0.data(as: Post.self) }
                 
                 print("DEBUG: Fetched \(posts.count) posts for user \(uid)")
                 completion(posts)
@@ -295,7 +283,6 @@ class ProfileService: ProfileServiceProtocol {
         var allPosts: [Post] = []
         let group = DispatchGroup()
         
-        // Split into chunks of 10 (Firestore 'in' query limitation)
         let chunks = stride(from: 0, to: postIds.count, by: 10).map {
             Array(postIds[$0..<min($0 + 10, postIds.count)])
         }
@@ -310,19 +297,7 @@ class ProfileService: ProfileServiceProtocol {
                     if let error = error {
                         print("DEBUG: Batch fetch failed - \(error.localizedDescription)")
                     } else if let documents = snapshot?.documents {
-                        let posts = documents.compactMap { doc -> Post? in
-                            let data = doc.data()
-                            return Post(
-                                id: doc.documentID,
-                                ownerUid: data["ownerUid"] as? String ?? "",
-                                caption: data["caption"] as? String ?? "",
-                                likes: data["likes"] as? Int ?? 0,
-                                imageUrl: data["imageUrl"] as? String ?? "",
-                                timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
-                                user: nil,
-                                studioId: data["studioId"] as? String
-                            )
-                        }
+                        let posts = documents.compactMap { try? $0.data(as: Post.self) }
                         allPosts.append(contentsOf: posts)
                     }
                     group.leave()

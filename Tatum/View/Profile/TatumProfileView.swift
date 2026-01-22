@@ -304,7 +304,7 @@ extension TatumProfileView {
                 ForEach(dataSource) { post in
                     let postOwner = post.user ?? viewModel.user
                     
-                    NavigationLink(destination: PostView(post: post, user: postOwner)) {
+                    NavigationLink(destination: PostView(post: post)) {
                         WebImage(url: URL(string: post.imageUrl))
                             .resizable()
                             .indicator(.activity)

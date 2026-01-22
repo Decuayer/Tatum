@@ -29,6 +29,12 @@ class AuthService: AuthServiceProtocol {
         }
     }
     
+    // MARK: - Current User
+    
+    static func getCurrentUserId() -> String? {
+        return Auth.auth().currentUser?.uid
+    }
+    
     // MARK: - Login
     
     func login(withEmail email: String, password: String, completion: @escaping (Bool, String?) -> Void) {
@@ -47,7 +53,6 @@ class AuthService: AuthServiceProtocol {
     // MARK: - Register
     
     func register(withEmail email: String, password: String, fullname: String, username: String, completion: @escaping (Bool, String?) -> Void) {
-        // Validate inputs
         guard !email.isEmpty, !password.isEmpty, !fullname.isEmpty, !username.isEmpty else {
             completion(false, "All fields are required.")
             return

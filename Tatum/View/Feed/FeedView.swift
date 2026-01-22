@@ -19,8 +19,7 @@ struct FeedView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         
-                        StoryView()
-                            .padding(.vertical, 10)
+                        
                         
                         Divider()
                             .background(Color.gray.opacity(0.2))
@@ -108,7 +107,6 @@ extension FeedView {
             .padding(.vertical, 15)
             .background(Color("CardDark").opacity(0.3))
             
-            // Önerilen Postlar Listesi
             ForEach(viewModel.suggestedPosts) { post in
                 FeedPostView(post: post)
             }

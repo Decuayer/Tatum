@@ -6,83 +6,89 @@ struct CommentsView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var commentText = ""
     @Environment(\.dismiss) var dismiss
+    @Binding var selectedUser: TatumUser?
     
-    init(post: Post) {
+    init(post: Post, selectedUser: Binding<TatumUser?>) {
         _viewModel = StateObject(wrappedValue: CommentsViewModel(post: post))
+        _selectedUser = selectedUser
     }
     
     var body: some View {
-        NavigationStack {
-            VStack {
-                VStack(spacing: 8) {
-                    Capsule()
-                        .frame(width: 40, height: 4)
-                        .foregroundColor(.gray.opacity(0.5))
-                        .padding(.top, 8)
-                    
-                    Text("Comments")
-                        .font(.custom("Poppins-SemiBold", size: 16))
-                        .foregroundColor(.white)
-                }
+        VStack {
+            VStack(spacing: 8) {
+                Capsule()
+                    .frame(width: 40, height: 4)
+                    .foregroundColor(.gray.opacity(0.5))
+                    .padding(.top, 8)
                 
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(viewModel.comments) { comment in
-                            CommentRow(comment: comment, authViewModel: authViewModel)
-                        }
+                Text("Comments")
+                    .font(.custom("Poppins-SemiBold", size: 16))
+                    .foregroundColor(.white)
+            }
+            
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    ForEach(viewModel.comments) { comment in
+                        CommentRow(
+                            comment: comment,
+                            authViewModel: authViewModel,
+                            onUserTap: { user in
+                                selectedUser = user
+                                dismiss()
+                            }
+                        )
                     }
-                    .padding()
-                }
-                
-                if viewModel.comments.isEmpty {
-                    Spacer()
-                    VStack(spacing: 12) {
-                        Image(systemName: "bubble.left.and.bubble.right")
-                            .font(.system(size: 40))
-                            .foregroundColor(.gray)
-                        Text("No comments yet. Be the first!")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                    Spacer()
-                }
-                
-                Divider().background(Color.gray.opacity(0.3))
-                
-                // Comment Input Area
-                HStack(spacing: 12) {
-                    TextField("Add a comment...", text: $commentText)
-                        .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.white)
-                        .padding(12)
-                        .background(Color("CardDark"))
-                        .cornerRadius(20)
-                    
-                    Button(action: {
-                        if !commentText.isEmpty {
-                            viewModel.uploadComment(commentText: commentText)
-                            commentText = ""
-                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                        }
-                    }) {
-                        Text("Post")
-                            .font(.custom("Poppins-SemiBold", size: 14))
-                            .foregroundColor(commentText.isEmpty ? .gray : Color("BrandPurple"))
-                    }
-                    .disabled(commentText.isEmpty)
                 }
                 .padding()
-                .background(Color("BackgroundDark"))
             }
-            .background(Color("BackgroundDark").ignoresSafeArea())
+            
+            if viewModel.comments.isEmpty {
+                Spacer()
+                VStack(spacing: 12) {
+                    Image(systemName: "bubble.left.and.bubble.right")
+                        .font(.system(size: 40))
+                        .foregroundColor(.gray)
+                    Text("No comments yet. Be the first!")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                Spacer()
+            }
+            
+            Divider().background(Color.gray.opacity(0.3))
+            
+            HStack(spacing: 12) {
+                TextField("Add a comment...", text: $commentText)
+                    .font(.custom("Poppins-Regular", size: 14))
+                    .foregroundColor(.white)
+                    .padding(12)
+                    .background(Color("CardDark"))
+                    .cornerRadius(20)
+                
+                Button(action: {
+                    if !commentText.isEmpty {
+                        viewModel.uploadComment(commentText: commentText)
+                        commentText = ""
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+                }) {
+                    Text("Post")
+                        .font(.custom("Poppins-SemiBold", size: 14))
+                        .foregroundColor(commentText.isEmpty ? .gray : Color("BrandPurple"))
+                }
+                .disabled(commentText.isEmpty)
+            }
+            .padding()
+            .background(Color("BackgroundDark"))
         }
+        .background(Color("BackgroundDark").ignoresSafeArea())
     }
 }
 
-// Single Comment Row Design
 struct CommentRow: View {
     let comment: Comment
     @ObservedObject var authViewModel: AuthViewModel
+    var onUserTap: (TatumUser) -> Void
     
     var isCurrentUser: Bool {
         authViewModel.currentUser?.id == comment.uid
@@ -90,30 +96,49 @@ struct CommentRow: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            // Profile Image - NavigationLink wrapper only if not current user
-            if isCurrentUser {
-                profileImage
-            } else {
-                NavigationLink(destination: getUserProfileView()) {
-                    profileImage
+            if !isCurrentUser {
+                Button(action: {
+                    onUserTap(createUserFromComment())
+                }) {
+                    HStack(alignment: .top, spacing: 12) {
+                        profileImage
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(alignment: .bottom, spacing: 6) {
+                                Text(comment.username)
+                                    .font(.custom("Poppins-Bold", size: 14))
+                                    .foregroundColor(.white)
+                                
+                                Text(comment.timestampString())
+                                    .font(.caption2)
+                                    .foregroundColor(.gray)
+                            }
+                            
+                            Text(comment.commentText)
+                                .font(.custom("Poppins-Regular", size: 14))
+                                .foregroundColor(.white)
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .bottom, spacing: 6) {
-                    Text(comment.username)
-                        .font(.custom("Poppins-SemiBold", size: 14))
-                        .foregroundColor(.white)
-                    
-                    Text(comment.timestampString())
-                        .font(.caption2)
-                        .foregroundColor(.gray)
-                }
+            } else {
+                profileImage
                 
-                Text(comment.commentText)
-                    .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .bottom, spacing: 6) {
+                        Text(comment.username)
+                            .font(.custom("Poppins-Bold", size: 14))
+                            .foregroundColor(Color("BrandPurple"))
+                        
+                        Text(comment.timestampString())
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                    }
+                    
+                    Text(comment.commentText)
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(.white)
+                }
             }
             
             Spacer()
@@ -137,26 +162,20 @@ struct CommentRow: View {
         }
     }
     
-    @ViewBuilder
-    private func getUserProfileView() -> some View {
-        // Fetch the user from Firebase for the profile view
-        // We need to create a TatumUser from the comment's owner data
-        let user = TatumUser(
+    private func createUserFromComment() -> TatumUser {
+        TatumUser(
             id: comment.uid,
-            email: "",  // Not available from comment
+            email: "",
             username: comment.username,
-            fullName: comment.username,  // Use username as fallback
+            fullName: comment.username,
             profileImageUrl: comment.profileImageUrl,
-            role: "member",  // Default role
+            role: "member",
             bio: nil,
             website: nil,
             phoneNumber: nil,
             studioId: nil,
-            followersCount: 0,  // Will be loaded by ProfileViewModel
-            followingCount: 0   // Will be loaded by ProfileViewModel
+            followersCount: 0,
+            followingCount: 0
         )
-        
-        TatumProfileView(user: user)
-            .environmentObject(authViewModel)
     }
 }

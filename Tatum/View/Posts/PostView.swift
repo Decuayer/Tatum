@@ -3,13 +3,13 @@ import SDWebImageSwiftUI
 
 struct PostView: View {
     @StateObject var viewModel: PostViewModel
-    let user: TatumUser
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var authViewModel: AuthViewModel
     
     @State private var showComments = false
+    @State private var selectedUser: TatumUser?
     
-    init(post: Post, user: TatumUser) {
-        self.user = user
+    init(post: Post) {
         _viewModel = StateObject(wrappedValue: PostViewModel(post: post))
     }
     
@@ -19,23 +19,35 @@ struct PostView: View {
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    NavigationLink(destination: TatumProfileView(user: user)) {
-                        postHeader
-                    }
-                    .buttonStyle(.plain)
+                    postHeader
                     
                     postImage
                     postFooter
                 }
             }
+            .refreshable {
+                viewModel.refresh()
+            }
         }
         .background(Color("BackgroundDark").ignoresSafeArea())
         .navigationBarHidden(true)
         .sheet(isPresented: $showComments) {
-            CommentsView(post: viewModel.post)
+            CommentsView(post: viewModel.post, selectedUser: $selectedUser)
+                .environmentObject(authViewModel)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .background(
+            NavigationLink(
+                destination: selectedUser.map { TatumProfileView(user: $0) },
+                isActive: Binding(
+                    get: { selectedUser != nil },
+                    set: { if !$0 { selectedUser = nil } }
+                )
+            ) {
+                EmptyView()
+            }
+        )
     }
 }
 
@@ -44,7 +56,7 @@ extension PostView {
     
     private var customNavBar: some View {
         VStack(spacing: 0) {
-            ZStack {
+            ZStack {    
                 Text("Post")
                     .font(.custom("Poppins-Bold", size: 20))
                     .foregroundColor(.white)
@@ -74,37 +86,62 @@ extension PostView {
     
     private var postHeader: some View {
         HStack {
-            if let imgUrl = user.profileImageUrl, !imgUrl.isEmpty {
-                WebImage(url: URL(string: imgUrl))
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 40, height: 40)
-                    .clipShape(Circle())
+            if let user = viewModel.postOwner {
+                NavigationLink(destination: TatumProfileView(user: user)) {
+                    HStack(spacing: 12) {
+                        if let imgUrl = user.profileImageUrl, !imgUrl.isEmpty {
+                            WebImage(url: URL(string: imgUrl))
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 40, height: 40)
+                                .clipShape(Circle())
+                        } else {
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .foregroundColor(.gray)
+                                .frame(width: 40, height: 40)
+                        }
+                        
+                       
+                    }
+                }
+                .buttonStyle(.plain)
+                
+                NavigationLink(destination: TatumProfileView(user: user)) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(user.username)
+                            .font(.custom("Poppins-SemiBold", size: 16))
+                            .foregroundColor(.white)
+                        
+                        if viewModel.post.hasStudioTag {
+                            Text("Studio Post")
+                                .font(.caption2)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
             } else {
-                Image(systemName: "person.circle.fill")
-                    .resizable()
-                    .foregroundColor(.gray)
+                Circle()
                     .frame(width: 40, height: 40)
+                    .foregroundColor(.gray.opacity(0.3))
             }
             
-            Text(user.username)
-                .font(.custom("Poppins-SemiBold", size: 16))
-                .foregroundColor(.white)
             
             Spacer()
             
             Button(action: {
-                // TODO: Show options menu
-                print("User more")
+                // TODO: Show Post options menu
+                print("TODO: Show Post Options Menu")
             }) {
                 Image(systemName: "ellipsis")
                     .foregroundColor(.white)
+                    .padding(8)
             }
         }
         .padding(.horizontal)
         .padding(.top, 12)
         .padding(.bottom, 12)
-        .contentShape(Rectangle())
     }
     
     private var postImage: some View {
@@ -121,11 +158,7 @@ extension PostView {
             
             HStack(spacing: 16) {
                 Button(action: {
-                    if viewModel.isLiked {
-                        viewModel.unlikePost()
-                    } else {
-                        viewModel.likePost()
-                    }
+                    viewModel.isLiked ? viewModel.unlikePost() : viewModel.likePost()
                 }) {
                     Image(systemName: viewModel.isLiked ? "heart.fill" : "heart")
                         .font(.title2)
@@ -145,31 +178,43 @@ extension PostView {
                 
                 Button(action: {
                     // TODO: Implement save/unsave
+                    print("TODO: Save/Unsave Post")
                 }) {
                     Image(systemName: "bookmark")
                         .font(.title2)
                 }
             }
             .foregroundColor(.white)
+            .padding(.horizontal)
             .padding(.top, 8)
             
             if viewModel.likesCount > 0 {
                 Text("\(viewModel.likesCount) likes")
-                    .font(.custom("Poppins-SemiBold", size: 14))
+                    .font(.custom("Poppins-Bold", size: 14))
                     .foregroundColor(.white)
-                    .padding(.top, 4)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
             }
             
-            Text("\(Text(user.username).font(.custom("Poppins-SemiBold", size: 14))) \(Text(viewModel.post.caption).font(.custom("Poppins-Regular", size: 14)))")
-                .foregroundColor(.white)
-                .padding(.top, 4)
+            HStack(alignment: .top) {
+                if let user = viewModel.postOwner {
+                    Text(user.username)
+                        .font(.custom("Poppins-SemiBold", size: 14))
+                        .foregroundColor(.white)
+                    +
+                    Text(" \(viewModel.post.caption)")
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(.white)
+                }
+            }
+            .padding(.horizontal)
             
             Text(viewModel.post.timestamp.formatted(date: .abbreviated, time: .shortened))
-                .font(.caption)
+                .font(.custom("Poppins-Regular", size: 12))
                 .foregroundColor(.gray)
-                .padding(.top, 4)
-                .padding(.bottom, 12)
+                .padding(.horizontal)
+                .padding(.bottom, 8)
         }
-        .padding(.horizontal, 12)
     }
+    
 }

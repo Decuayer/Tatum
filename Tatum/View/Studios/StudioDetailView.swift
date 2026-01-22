@@ -204,7 +204,7 @@ extension StudioDetailView {
                             followingCount: 0
                         )
                         
-                        NavigationLink(destination: PostView(post: post, user: postOwner)) { 
+                        NavigationLink(destination: PostView(post: post)) { 
                             WebImage(url: URL(string: post.imageUrl))
                                 .resizable()
                                 .scaledToFill()

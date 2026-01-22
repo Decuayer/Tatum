@@ -56,15 +56,15 @@ class AuthViewModel: ObservableObject {
     
     //MARK: - Extracting User Information
     func fetchUser(uid: String) {
-        print("DEBUG: Fetch User Started.")
+        print("DEBUG: (AuthViewModel) UserID:\(uid) Fetch User Started.")
         service.fetchUser(uid: uid) { [weak self] user in
             self?.currentUser = user
             self?.isLoading = false
             
             if let user = user {
-                print("DEBUG: User Uploaded: \(user.username)")
+                print("DEBUG: (AuthViewModel) UserID:\(uid) User Uploaded: \(user.username)")
             } else {
-                print("DEBUG: User returned NIL.")
+                print("DEBUG: (AuthViewModel) UserID:\(uid) User returned NIL.")
             }
         }
     }

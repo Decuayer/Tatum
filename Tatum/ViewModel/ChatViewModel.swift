@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import FirebaseAuth
 
 class ChatViewModel: ObservableObject {
     @Published var messages: [Message] = []
