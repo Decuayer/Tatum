@@ -38,7 +38,7 @@ class FeedViewModel: ObservableObject {
         
         group.notify(queue: .main) {
             self.isLoading = false
-            self.testPosts()
+            //self.testPosts()
         }
     }
     

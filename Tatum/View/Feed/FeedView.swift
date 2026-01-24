@@ -18,8 +18,8 @@ struct FeedView: View {
                 
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        
-                        
+                        customNavBar
+                            .zIndex(1)
                         
                         Divider()
                             .background(Color.gray.opacity(0.2))
@@ -46,32 +46,7 @@ struct FeedView: View {
                     viewModel.fetchData()
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Text("TATUM")
-                        .font(.custom("Poppins-Bold", size: 18))
-                        .foregroundColor(Color("BrandPurple"))
-                        .fixedSize(horizontal: true, vertical: false)
-                        .padding(.horizontal, 10)
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 20) {
-                        NavigationLink(destination: Text("Bildirimler Ekranı Yapılacak")) {
-                            Image(systemName: "heart")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
-                        
-                        NavigationLink(destination: InboxView()) {
-                            Image(systemName: "paperplane")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
-            }
+            .navigationBarHidden(true)
             
         }
         .onAppear {
@@ -84,6 +59,30 @@ struct FeedView: View {
 
 // MARK: - Subviews & Sections
 extension FeedView {
+    
+    private var customNavBar: some View {
+        ZStack {
+            Text("TATUM")
+                .font(.custom("Poppins-Bold", size: 24))
+                .foregroundColor(Color("BrandPurple"))
+            
+            HStack {
+                Spacer()
+                
+                HStack(spacing: 20) {
+                    NavigationLink(destination: Text("TODO: Notifications screen will be created.")) {
+                        Image(systemName: "heart")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 10)
+        .padding(.bottom, 12)
+    }
     
     private var feedSection: some View {
         ForEach(viewModel.feedPosts) { post in
