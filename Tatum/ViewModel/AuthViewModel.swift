@@ -13,6 +13,8 @@ class AuthViewModel: ObservableObject {
     @Published var userSession: String?
     @Published var currentUser: TatumUser?
     @Published var isLoading = true
+    @Published var errorMessage: String?
+    @Published var isAuthenticating = false
     
     private let service: AuthServiceProtocol
     private var cancellables = Set<AnyCancellable>()
@@ -46,12 +48,38 @@ class AuthViewModel: ObservableObject {
     
     //MARK: - Login Function
     func login(withEmail email: String, password: String, completion: @escaping (Bool, String?) -> Void) {
-        service.login(withEmail: email, password: password, completion: completion)
+        errorMessage = nil
+        isAuthenticating = true
+        
+        service.login(withEmail: email, password: password) { [weak self] success, error in
+            DispatchQueue.main.async {
+                self?.isAuthenticating = false
+                
+                if let error = error {
+                    self?.errorMessage = error
+                }
+                
+                completion(success, error)
+            }
+        }
     }
     
     //MARK: - Register Function
     func register(withEmail email: String, password: String, fullname: String, username: String, completion: @escaping (Bool, String?) -> Void) {
-        service.register(withEmail: email, password: password, fullname: fullname, username: username, completion: completion)
+        errorMessage = nil
+        isAuthenticating = true
+        
+        service.register(withEmail: email, password: password, fullname: fullname, username: username) { [weak self] success, error in
+            DispatchQueue.main.async {
+                self?.isAuthenticating = false
+                
+                if let error = error {
+                    self?.errorMessage = error
+                }
+                
+                completion(success, error)
+            }
+        }
     }
     
     //MARK: - Extracting User Information
@@ -85,5 +113,10 @@ class AuthViewModel: ObservableObject {
             user.followingCount = max(0, user.followingCount - 1)
         }
         self.currentUser = user
+    }
+    
+    //MARK: - Clear Error
+    func clearError() {
+        errorMessage = nil
     }
 }

@@ -18,24 +18,24 @@ struct LoginView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
-                // Logo or Title
                 Text("TATUM")
                     .font(.custom("Poppins-Bold", size: 40))
                     .foregroundColor(Color("BrandPurple"))
                     .padding(.bottom, 50)
                 
-                // Input Area
+                
+                
                 VStack(spacing: 20) {
                     CustomTextField(imageName: "envelope", placeholderText: "Email", text: $email)
                     CustomTextField(imageName: "lock", placeholderText: "Password", isSecureField: true, text: $password)
                 }
                 .padding(.horizontal, 30)
                 
-                // Forget Password (Şimdilik İşlevsiz)
                 HStack {
                     Spacer()
                     Button("Forget Password") {
-                        // TODO
+                        // TODO : Forget Password
+                        print("TODO: Forget Password")
                     }
                     .font(.caption)
                     .foregroundColor(.gray)
@@ -43,26 +43,53 @@ struct LoginView: View {
                 .padding(.horizontal, 32)
                 .padding(.top, 4)
                 
-                // Login Button
                 Button(action: {
                     viewModel.login(withEmail: email, password: password) { success, error in
-                        if let error = error {
-                            print("Error: \(error)") // İlerde kulanıcıya alert göstereceğiz
-                        }
                     }
                 }) {
-                    Text("Sign In")
-                        .font(.custom("Poppins-Bold", size: 18))
-                        .foregroundColor(.white)
-                        .frame(width: 300, height: 50)
-                        .background(Color("BrandPurple"))
-                        .cornerRadius(12)
+                    if viewModel.isAuthenticating {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .frame(width: 300, height: 50)
+                            .background(Color("BrandPurple").opacity(0.7))
+                            .cornerRadius(12)
+                    } else {
+                        Text("Sign In")
+                            .font(.custom("Poppins-Bold", size: 18))
+                            .foregroundColor(.white)
+                            .frame(width: 300, height: 50)
+                            .background(Color("BrandPurple"))
+                            .cornerRadius(12)
+                    }
                 }
+                .disabled(viewModel.isAuthenticating)
                 .padding(.top, 24)
+                
+                if let errorMessage = viewModel.errorMessage {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.white)
+                        Text(errorMessage)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white)
+                        Spacer()
+                        Button(action: {
+                            viewModel.clearError()
+                        }) {
+                            Image(systemName: "xmark")
+                                .foregroundColor(.white)
+                                .font(.system(size: 12))
+                        }
+                    }
+                    .padding()
+                    .background(Color.red.opacity(0.8))
+                    .cornerRadius(10)
+                    .padding(.horizontal, 30)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
                 
                 Spacer()
                 
-                // Register Instructions
                 NavigationLink {
                     RegistrationView()
                         .navigationBarHidden(true)
@@ -79,9 +106,11 @@ struct LoginView: View {
                 .padding(.bottom, 32)
             }
         }
+        .animation(.easeInOut, value: viewModel.errorMessage)
+        .onAppear {
+            viewModel.clearError()
+        }
     }
 }
 
-#Preview {
-    LoginView()
-}
+
