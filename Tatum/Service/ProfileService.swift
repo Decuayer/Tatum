@@ -1,3 +1,10 @@
+//
+//  ProfileService.swift
+//  Tatum
+//
+//  Created by Demir Cücü on 24.01.2026.
+//
+
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth
@@ -12,6 +19,9 @@ protocol ProfileServiceProtocol {
     func unfollow(uid: String, completion: @escaping (Error?) -> Void)
     func checkIfUserIsFollowed(uid: String, completion: @escaping (Bool) -> Void)
     func removeFollower(uid: String, completion: @escaping (Error?) -> Void)
+    
+    func updateUserProfile(uid: String, data: [String: Any], completion: @escaping (Error?) -> Void)
+    func uploadProfileImage(image: UIImage, uid: String, completion: @escaping (String?, Error?) -> Void)
 }
 
 class ProfileService: ProfileServiceProtocol {
@@ -338,4 +348,41 @@ class ProfileService: ProfileServiceProtocol {
             completion(error)
         }
     }
+    
+    // MARK: - Profile Update
+    
+    /// Updates user profile fields in Firestore
+    func updateUserProfile(uid: String, data: [String: Any], completion: @escaping (Error?) -> Void) {
+        print("DEBUG: Updating profile for user \(uid) with data: \(data.keys)")
+        
+        Firestore.firestore().collection("users").document(uid).updateData(data) { error in
+            if let error = error {
+                print("DEBUG: Profile update failed - \(error.localizedDescription)")
+            } else {
+                print("DEBUG: Profile updated successfully")
+            }
+            completion(error)
+        }
+    }
+    
+    /// Uploads profile image to Firebase Storage and returns the download URL
+    func uploadProfileImage(image: UIImage, uid: String, completion: @escaping (String?, Error?) -> Void) {
+        print("DEBUG: Uploading profile image for user \(uid)")
+        
+        ImageUploader.uploadImage(
+            image: image,
+            folder: "profile_images",
+            maxDimension: 800,  // Profile images don't need to be huge
+            compressionQuality: 0.85
+        ) { imageUrl, error in
+            if let error = error {
+                print("DEBUG: Profile image upload failed - \(error.localizedDescription)")
+                completion(nil, error)
+            } else if let imageUrl = imageUrl {
+                print("DEBUG: Profile image uploaded successfully - \(imageUrl)")
+                completion(imageUrl, nil)
+            }
+        }
+    }
 }
+

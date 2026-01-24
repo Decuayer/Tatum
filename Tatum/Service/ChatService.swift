@@ -1,3 +1,10 @@
+//
+//  ChatService.swift
+//  Tatum
+//
+//  Created by Demir Cücü on 24.01.2026.
+//
+
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth

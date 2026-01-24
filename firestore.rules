@@ -1,147 +1,23 @@
 rules_version = '2';
+
+// ============================================================================
+// TATUM - Development Rules (PERMISSIVE - NOT FOR PRODUCTION!)
+// ============================================================================
+// WARNING: These rules allow all authenticated users to read/write everything.
+// This is for development only. Before production, replace with secure rules.
+// ============================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
+    // Allow all authenticated users to read/write everything
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
     
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-    
-    function isValidUser() {
-      return isAuthenticated() && 
-             request.auth.token.email_verified == true;
-    }
-    
-    // User documents
+    // Also allow some unauthenticated reads for login checks
     match /users/{userId} {
-      // Anyone authenticated can read user profiles
-      allow read: if isAuthenticated();
-      
-      // Only the user can update their own profile
-      allow update: if isOwner(userId);
-      
-      // Only authenticated users can create profiles (via registration)
-      allow create: if isAuthenticated() && isOwner(userId);
-      
-      // Users cannot delete their own profile (admin-only via backend)
-      allow delete: if false;
-      
-      // User sub-collections
-      match /user-followers/{followerId} {
-        // Anyone authenticated can read followers list
-        allow read: if isAuthenticated();
-        
-        // Can write if you're the follower or the profile owner
-        allow write: if isAuthenticated() && 
-                       (isOwner(userId) || isOwner(followerId));
-      }
-      
-      match /user-following/{followingId} {
-        // Anyone authenticated can read following list
-        allow read: if isAuthenticated();
-        
-        // Only the user can manage who they follow
-        allow write: if isAuthenticated() && isOwner(userId);
-      }
-      
-      match /user-likes/{postId} {
-        // Only the user can see their own likes
-        allow read: if isAuthenticated() && isOwner(userId);
-        
-        // Only the user can like/unlike posts
-        allow write: if isAuthenticated() && isOwner(userId);
-      }
-    }
-    
-    // Post documents
-    match /posts/{postId} {
-      // Anyone authenticated can read posts
-      allow read: if isAuthenticated();
-      
-      // Only authenticated users can create posts
-      // Must set ownerUid to their own UID
-      allow create: if isAuthenticated() && 
-                      request.resource.data.ownerUid == request.auth.uid &&
-                      request.resource.data.keys().hasAll(['ownerUid', 'caption', 'imageUrl', 'timestamp']);
-      
-      // Only post owner can update their post
-      allow update: if isAuthenticated() && 
-                      resource.data.ownerUid == request.auth.uid;
-      
-      // Only post owner can delete their post
-      allow delete: if isAuthenticated() && 
-                      resource.data.ownerUid == request.auth.uid;
-    }
-    
-    // Studio documents
-    match /studios/{studioId} {
-      // Anyone authenticated can read studios
-      allow read: if isAuthenticated();
-      
-      // Only artists or unclaimed studios can be written
-      allow create: if isAuthenticated() && 
-                      (request.resource.data.isClaimed == false ||
-                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'artist');
-      
-      // Only studio owner or artists can update
-      allow update: if isAuthenticated() && 
-                      (resource.data.ownerId == request.auth.uid ||
-                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'artist');
-      
-      // Only studio owner can delete
-      allow delete: if isAuthenticated() && 
-                      resource.data.ownerId == request.auth.uid;
-    }
-    
-    // Message/Chat documents
-    match /messages/{chatId} {
-      // Only participants can read messages
-      allow read: if isAuthenticated();
-      
-      // Only authenticated users can create messages
-      allow create: if isAuthenticated();
-      
-      // Only sender can update/delete their messages
-      allow update, delete: if isAuthenticated();
-    }
-    
-    // Comments on posts
-    match /comments/{commentId} {
-      // Anyone authenticated can read comments
-      allow read: if isAuthenticated();
-      
-      // Only authenticated users can create comments
-      allow create: if isAuthenticated() && 
-                      request.resource.data.userId == request.auth.uid;
-      
-      // Only comment author can update/delete
-      allow update, delete: if isAuthenticated() && 
-                              resource.data.userId == request.auth.uid;
-    }
-    
-    // Appointments/Bookings
-    match /appointments/{appointmentId} {
-      // Users can read their own appointments
-      allow read: if isAuthenticated() && 
-                    (resource.data.userId == request.auth.uid ||
-                     resource.data.artistId == request.auth.uid);
-      
-      // Users can create appointments for themselves
-      allow create: if isAuthenticated() && 
-                      request.resource.data.userId == request.auth.uid;
-      
-      // Both user and artist can update appointment status
-      allow update: if isAuthenticated() && 
-                      (resource.data.userId == request.auth.uid ||
-                       resource.data.artistId == request.auth.uid);
-      
-      // Only appointment creator can delete
-      allow delete: if isAuthenticated() && 
-                      resource.data.userId == request.auth.uid;
+      allow read: if true;
     }
   }
 }

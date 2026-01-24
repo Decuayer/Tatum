@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import UIKit
 
 
 class AuthViewModel: ObservableObject {
@@ -115,8 +116,155 @@ class AuthViewModel: ObservableObject {
         self.currentUser = user
     }
     
+    //MARK: - Google Sign-In Function
+    func signInWithGoogle(presenting: UIViewController, isRegistration: Bool = false) {
+        isAuthenticating = true
+        errorMessage = nil
+        
+        service.signInWithGoogle(presenting: presenting, isRegistration: isRegistration) { [weak self] success, error in
+            DispatchQueue.main.async {
+                self?.isAuthenticating = false
+                if let error = error {
+                    self?.errorMessage = error
+                } else if success {
+                    print("DEBUG: (AuthViewModel) Google Sign-In successful")
+                }
+            }
+        }
+    }
+    
+    func signInWithApple(isRegistration: Bool = false) {
+        isAuthenticating = true
+        errorMessage = nil
+        
+        service.signInWithApple(isRegistration: isRegistration) { [weak self] success, error in
+            DispatchQueue.main.async {
+                self?.isAuthenticating = false
+                if let error = error {
+                    self?.errorMessage = error
+                } else if success {
+                    print("DEBUG: (AuthViewModel) Apple Sign-In successful")
+                }
+            }
+        }
+    }
+    
+    
+    //MARK: - Update User Profile
+    func updateUserProfile(
+        fullName: String,
+        username: String?,
+        bio: String?,
+        website: String?,
+        phoneNumber: String?,
+        profileImage: UIImage?,
+        completion: @escaping (Bool, String?) -> Void
+    ) {
+        guard let uid = userSession else {
+            completion(false, "No authenticated user found.")
+            return
+        }
+        
+        isAuthenticating = true
+        errorMessage = nil
+        
+        let profileService = ProfileService()
+        
+        // Step 1: Upload image if provided
+        if let image = profileImage {
+            profileService.uploadProfileImage(image: image, uid: uid) { [weak self] imageUrl, error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self?.isAuthenticating = false
+                        self?.errorMessage = "Failed to upload image: \(error.localizedDescription)"
+                        completion(false, self?.errorMessage)
+                    }
+                    return
+                }
+                
+                // Step 2: Update profile with image URL
+                self?.updateProfileData(
+                    uid: uid,
+                    fullName: fullName,
+                    username: username,
+                    bio: bio,
+                    website: website,
+                    phoneNumber: phoneNumber,
+                    profileImageUrl: imageUrl,
+                    profileService: profileService,
+                    completion: completion
+                )
+            }
+        } else {
+            // No image to upload, just update profile data
+            updateProfileData(
+                uid: uid,
+                fullName: fullName,
+                username: username,
+                bio: bio,
+                website: website,
+                phoneNumber: phoneNumber,
+                profileImageUrl: nil,
+                profileService: profileService,
+                completion: completion
+            )
+        }
+    }
+    
+    private func updateProfileData(
+        uid: String,
+        fullName: String,
+        username: String?,
+        bio: String?,
+        website: String?,
+        phoneNumber: String?,
+        profileImageUrl: String?,
+        profileService: ProfileService,
+        completion: @escaping (Bool, String?) -> Void
+    ) {
+        var updateData: [String: Any] = [
+            "fullName": fullName
+        ]
+        
+        if let username = username {
+            updateData["username"] = username
+        }
+        
+        if let bio = bio {
+            updateData["bio"] = bio
+        }
+        
+        if let website = website {
+            updateData["website"] = website
+        }
+        
+        if let phoneNumber = phoneNumber {
+            updateData["phoneNumber"] = phoneNumber
+        }
+        
+        if let imageUrl = profileImageUrl {
+            updateData["profileImageUrl"] = imageUrl
+        }
+        
+        profileService.updateUserProfile(uid: uid, data: updateData) { [weak self] error in
+            DispatchQueue.main.async {
+                self?.isAuthenticating = false
+                
+                if let error = error {
+                    self?.errorMessage = "Failed to update profile: \(error.localizedDescription)"
+                    completion(false, self?.errorMessage)
+                } else {
+                    // Refresh current user data
+                    self?.fetchUser(uid: uid)
+                    completion(true, nil)
+                }
+            }
+        }
+    }
+    
     //MARK: - Clear Error
     func clearError() {
         errorMessage = nil
     }
 }
+

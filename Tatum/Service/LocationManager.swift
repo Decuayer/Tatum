@@ -5,13 +5,6 @@
 //  Created by Demir Cücü on 22.12.2025.
 //
 
-//
-//  LocationManager.swift
-//  Tatum
-//
-//  Created by Demir Cücü on 22.12.2025.
-//
-
 import CoreLocation
 import MapKit
 import Combine

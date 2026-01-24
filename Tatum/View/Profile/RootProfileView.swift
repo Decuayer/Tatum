@@ -14,7 +14,6 @@ struct RootProfileView : View {
     
     @State private var selectedTab = "Portfolio"
     @State private var showSettings = false
-    @State private var showEditProfile = false
     
     var body: some View {
         NavigationView {
@@ -30,8 +29,7 @@ struct RootProfileView : View {
                     ProfileContent(
                         user: user, 
                         selectedTab: $selectedTab, 
-                        showSettings: $showSettings, 
-                        showEditProfile: $showEditProfile
+                        showSettings: $showSettings
                     )
                 } else {
                     VStack(spacing: 20) {

@@ -1,14 +1,17 @@
 //
-//  RegistrationView.swift
+//  EmailRegistrationView.swift
 //  Tatum
 //
-//  Created by Demir Cücü on 19.12.2025.
-//  Updated by Antigravity on 24.01.2026 - Now serving as Auth Method Selector
+//  Created by Antigravity on 24.01.2026.
 //
 
 import SwiftUI
 
-struct RegistrationView: View {
+struct EmailRegistrationView: View {
+    @State private var email = ""
+    @State private var fullname = ""
+    @State private var username = ""
+    @State private var password = ""
     @EnvironmentObject var viewModel: AuthViewModel
     @Environment(\.presentationMode) var mode
     
@@ -35,57 +38,59 @@ struct RegistrationView: View {
                             
                             Spacer()
                         }
+                        
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 30)
 
                     
-                    
-                    Text("Choose your sign up method")
-                        .font(.system(size: 16))
-                        .foregroundColor(.gray)
-                        .padding(.bottom, 20)
-                    
-                    // Email Registration Option
-                    NavigationLink(destination: EmailRegistrationView().environmentObject(viewModel)) {
-                        AuthMethodButton(
-                            icon: "envelope.fill",
-                            text: "Continue with Email",
-                            backgroundColor: Color("BrandPurple")
-                        )
+                    VStack(spacing: 20) {
+                        CustomTextField(imageName: "envelope", placeholderText: "Email", text: $email)
+                        CustomTextField(imageName: "person", placeholderText: "Full Name", text: $fullname)
+                        CustomTextField(imageName: "person.text.rectangle", placeholderText: "Username", text: $username)
+                        CustomTextField(imageName: "lock", placeholderText: "Password", isSecureField: true, text: $password)
                     }
+                    .padding(.horizontal, 32)
                     
-                    // Google Registration Option
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Password requirements:")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        Text("• At least 6 characters")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                        Text("• At least one uppercase letter, one lowercase letter, and one symbol.")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 32)
+                    .padding(.top, 4)
+                    
                     Button(action: {
-                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                           let rootViewController = windowScene.windows.first?.rootViewController {
-                            viewModel.signInWithGoogle(presenting: rootViewController, isRegistration: true)
+                        viewModel.register(withEmail: email, password: password, fullname: fullname, username: username) { success, error in
+                            if success {
+                                mode.wrappedValue.dismiss()
+                            }
                         }
                     }) {
-                        AuthMethodButton(
-                            icon: "globe",
-                            text: "Continue with Google",
-                            backgroundColor: .white,
-                            textColor: .black,
-                            iconColor: .black
-                        )
+                        if viewModel.isAuthenticating {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .frame(width: 300, height: 50)
+                                .background(Color("BrandPurple").opacity(0.7))
+                                .cornerRadius(12)
+                        } else {
+                            Text("Sign Up")
+                                .font(.custom("Poppins-Bold", size: 18))
+                                .foregroundColor(.white)
+                                .frame(width: 300, height: 50)
+                                .background(Color("BrandPurple"))
+                                .cornerRadius(12)
+                        }
                     }
                     .disabled(viewModel.isAuthenticating)
-                    
-                    // Apple Registration Option
-                    // TODO: Enable when Apple Developer Program is active (remove .disabled and .opacity)
-                    AuthMethodButton(
-                        icon: "applelogo",
-                        text: "Continue with Apple",
-                        backgroundColor: .black,
-                        iconColor: .white,
-                        borderColor: .white
-                        
-                        
-                    )
-                    .disabled(true)
-                    .opacity(0.5)
-                    .padding(.bottom, 8)
+                    .padding(.top, 24)
                     
                     if let errorMessage = viewModel.errorMessage {
                         HStack {
@@ -112,7 +117,7 @@ struct RegistrationView: View {
                     
                     Spacer()
                     
-                    Button(action: { mode.wrappedValue.dismiss() }) {
+                    Button(action: {mode.wrappedValue.dismiss() }) {
                         HStack {
                             Text("Already have an account?")
                                 .font(.system(size: 14))
@@ -133,34 +138,6 @@ struct RegistrationView: View {
             viewModel.clearError()
         }
         .navigationBarHidden(true)
-    }
-}
-
-// Auth Method Button Component
-struct AuthMethodButton: View {
-    let icon: String
-    let text: String
-    var backgroundColor: Color = Color("BrandPurple")
-    var textColor: Color = .white
-    var iconColor: Color = .white
-    var borderColor: Color?
-    
-    var body: some View {
-        HStack(spacing: 15) {
-            Image(systemName: icon)
-                .foregroundColor(iconColor)
-                .font(.system(size: 20))
-            Text(text)
-                .font(.custom("Poppins-Bold", size: 16))
-                .foregroundColor(textColor)
-        }
-        .frame(width: 300, height: 55)
-        .background(backgroundColor)
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(borderColor ?? Color.clear, lineWidth: borderColor != nil ? 1 : 0)
-        )
     }
 }
 

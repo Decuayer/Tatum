@@ -16,7 +16,6 @@ struct TatumProfileView: View {
     
     @State private var selectedTab = "Portfolio"
     @State private var showSettings = false
-    @State private var showEditProfile = false
     @State private var showChat = false
     
     
@@ -57,12 +56,6 @@ struct TatumProfileView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showSettings) {
             SettingsView()
-        }
-        .sheet(isPresented: $showEditProfile) {
-            EditProfileView()
-                .onDisappear {
-                    viewModel.refreshUserStats()
-                }
         }
         .onAppear {
             print("DEBUG: ProfileView has appeared, data is being refreshed.")
@@ -120,8 +113,7 @@ extension TatumProfileView {
             }
             
         }
-        .padding(.horizontal)
-        .padding(.top, 10)
+        
     }
     
     private var headerView: some View {
@@ -198,7 +190,7 @@ extension TatumProfileView {
     private var actionButtons: some View {
         HStack(spacing: 12) {
             if viewModel.user.isCurrentUser {
-                Button(action: { showEditProfile.toggle() }) {
+                NavigationLink(destination: EditProfileView()) {
                     Text("Edit Profile")
                         .font(.custom("Poppins-Medium", size: 14))
                         .foregroundColor(.white)
@@ -211,6 +203,7 @@ extension TatumProfileView {
                                 .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                         )
                 }
+                .buttonStyle(.plain)
             } else {
                 Button(action: {
                     viewModel.isFollowed ? viewModel.unfollow() : viewModel.follow()

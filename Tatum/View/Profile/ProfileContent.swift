@@ -6,15 +6,13 @@ struct ProfileContent: View {
     @StateObject var viewModel: TatumProfileViewModel
     @Binding var selectedTab: String
     @Binding var showSettings: Bool
-    @Binding var showEditProfile: Bool
     @EnvironmentObject var authViewModel: AuthViewModel
     
-    init(user: TatumUser, selectedTab: Binding<String>, showSettings: Binding<Bool>, showEditProfile: Binding<Bool>) {
+    init(user: TatumUser, selectedTab: Binding<String>, showSettings: Binding<Bool>) {
         self.user = user
         _viewModel = StateObject(wrappedValue: TatumProfileViewModel(user: user))
         _selectedTab = selectedTab
         _showSettings = showSettings
-        _showEditProfile = showEditProfile
     }
     
     var body: some View {
@@ -49,12 +47,6 @@ struct ProfileContent: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showSettings) {
             SettingsView()
-        }
-        .sheet(isPresented: $showEditProfile) {
-            EditProfileView()
-                .onDisappear {
-                    viewModel.refreshUserStats()
-                }
         }
         .onAppear {
             print("DEBUG: ProfileContent has appeared, data is being refreshed.")
@@ -176,7 +168,7 @@ extension ProfileContent {
     private var actionButtons: some View {
         HStack(spacing: 12) {
             if viewModel.user.isCurrentUser {
-                Button(action: { showEditProfile.toggle() }) {
+                NavigationLink(destination: EditProfileView()) {
                     Text("Edit Profile")
                         .font(.custom("Poppins-Medium", size: 14))
                         .foregroundColor(.white)
@@ -189,6 +181,7 @@ extension ProfileContent {
                                 .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                         )
                 }
+                .buttonStyle(.plain)
             } else {
                 Button(action: {
                     viewModel.isFollowed ? viewModel.unfollow() : viewModel.follow()

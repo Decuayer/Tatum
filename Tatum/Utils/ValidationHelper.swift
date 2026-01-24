@@ -61,6 +61,40 @@ struct ValidationHelper {
         return nil
     }
     
+    // MARK: - Phone Number Validation
+    
+    static func validatePhoneNumber(_ phone: String) -> String? {
+        let trimmedPhone = phone.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Allow empty phone (it's optional)
+        if trimmedPhone.isEmpty {
+            return nil
+        }
+        
+        // Remove common separators for validation
+        let digitsOnly = trimmedPhone.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        
+        // Check minimum length (at least 10 digits for most countries)
+        if digitsOnly.count < 10 {
+            return "Phone number must contain at least 10 digits."
+        }
+        
+        // Check maximum length (15 digits is international max)
+        if digitsOnly.count > 15 {
+            return "Phone number cannot exceed 15 digits."
+        }
+        
+        // Validate format: allow +, digits, spaces, dashes, parentheses
+        let phoneRegex = "^[+]?[0-9][0-9\\s\\-()]*$"
+        let phonePredicate = NSPredicate(format: "SELF MATCHES %@", phoneRegex)
+        
+        if !phonePredicate.evaluate(with: trimmedPhone) {
+            return "Enter a valid phone number format (e.g., +1234567890 or (123) 456-7890)."
+        }
+        
+        return nil
+    }
+    
     // MARK: - Helper Methods
     
     static func isValidEmail(_ email: String) -> Bool {
@@ -69,5 +103,9 @@ struct ValidationHelper {
     
     static func isValidPassword(_ password: String) -> Bool {
         return validatePassword(password) == nil
+    }
+    
+    static func isValidPhoneNumber(_ phone: String) -> Bool {
+        return validatePhoneNumber(phone) == nil
     }
 }

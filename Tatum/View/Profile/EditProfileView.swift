@@ -1,32 +1,43 @@
 import SwiftUI
-import PhotosUI // Fotoğraf seçimi için gerekli
-import SDWebImageSwiftUI // Mevcut fotoyu göstermek için
+import PhotosUI
+import SDWebImageSwiftUI
 
 struct EditProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) var dismiss
     
-    // Form Değişkenleri
+    // Form Variables
     @State private var fullname = ""
+    @State private var username = ""
     @State private var bio = ""
     @State private var website = ""
     @State private var phone = ""
     
-    // Fotoğraf Seçimi İçin
+    // Photo Selection
     @State private var selectedItem: PhotosPickerItem? = nil
     @State private var selectedImageData: Data? = nil
+    @State private var croppedImage: UIImage? = nil
+    @State private var showImageCropper = false
+    @State private var tempImageForCropping: UIImage? = nil
+    
+    // Validation
+    @State private var phoneValidationError: String? = nil
+    
+    // Loading state
+    @State private var isSaving = false
+    @State private var showSuccessMessage = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 Color("BackgroundDark").ignoresSafeArea()
                 VStack(spacing: 0) {
                     customNavBar
-
+                    
                     ScrollView {
                         VStack(spacing: 24) {
                             
-                            // 1. FOTOĞRAF DEĞİŞTİRME ALANI
+                            // 1. PROFILE PHOTO CHANGE AREA
                             VStack(spacing: 12) {
                                 PhotosPicker(
                                     selection: $selectedItem,
@@ -34,31 +45,33 @@ struct EditProfileView: View {
                                     photoLibrary: .shared()
                                 ) {
                                     ZStack(alignment: .bottomTrailing) {
-                                        // A) Yeni seçilen fotoğraf varsa onu göster
-                                        if let selectedImageData, let uiImage = UIImage(data: selectedImageData) {
+                                        // Show cropped image first, then selected, then current
+                                        if let croppedImage = croppedImage {
+                                            Image(uiImage: croppedImage)
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 100, height: 100)
+                                                .clipShape(Circle())
+                                        } else if let selectedImageData, let uiImage = UIImage(data: selectedImageData) {
                                             Image(uiImage: uiImage)
                                                 .resizable()
                                                 .scaledToFill()
                                                 .frame(width: 100, height: 100)
                                                 .clipShape(Circle())
-                                        }
-                                        // B) Yoksa mevcut internetteki fotoyu göster
-                                        else if let imageUrl = authViewModel.currentUser?.profileImageUrl {
+                                        } else if let imageUrl = authViewModel.currentUser?.profileImageUrl {
                                             WebImage(url: URL(string: imageUrl))
                                                 .resizable()
                                                 .scaledToFill()
                                                 .frame(width: 100, height: 100)
                                                 .clipShape(Circle())
-                                        }
-                                        // C) O da yoksa boş ikon göster
-                                        else {
+                                        } else {
                                             Image(systemName: "person.circle.fill")
                                                 .resizable()
                                                 .foregroundColor(.gray)
                                                 .frame(width: 100, height: 100)
                                         }
                                         
-                                        // Düzenle İkonu (Rozet)
+                                        // Edit Icon Badge
                                         Image(systemName: "camera.fill")
                                             .foregroundColor(.white)
                                             .padding(6)
@@ -74,12 +87,22 @@ struct EditProfileView: View {
                             }
                             .padding(.top, 20)
                             
-                            // 2. INPUT ALANLARI
+                            // 2. INPUT FIELDS
                             VStack(spacing: 20) {
                                 EditProfileField(title: "Full Name", text: $fullname)
+                                EditProfileField(title: "Username", text: $username)
                                 EditProfileField(title: "Bio", text: $bio, isMultiLine: true)
-                                EditProfileField(title: "Website", text: $website)
-                                EditProfileField(title: "Phone Number", text: $phone)
+                                
+                                // Website field - only for Artists
+                                if let user = authViewModel.currentUser, user.isArtist {
+                                    EditProfileField(title: "Website", text: $website)
+                                }
+                                
+                                EditProfileField(
+                                    title: "Phone Number",
+                                    text: $phone,
+                                    validationError: phoneValidationError
+                                )
                             }
                             .padding(.horizontal)
                             
@@ -88,52 +111,115 @@ struct EditProfileView: View {
                     }
                 }
                 
-                
+                // Success message overlay
+                if showSuccessMessage {
+                    VStack {
+                        Spacer()
+                        Text("Profile updated successfully!")
+                            .font(.custom("Poppins-Medium", size: 14))
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color("BrandPurple"))
+                            .cornerRadius(12)
+                            .padding(.bottom, 50)
+                    }
+                    .transition(.move(edge: .bottom))
+                }
             }
             .navigationBarHidden(true)
-            // Sayfa açıldığında mevcut verileri doldur
+            .navigationDestination(isPresented: $showImageCropper) {
+                if let image = tempImageForCropping {
+                    ImageCropperView(
+                        image: image,
+                        onCrop: { croppedImg in
+                            croppedImage = croppedImg
+                            showImageCropper = false
+                        },
+                        onCancel: {
+                            showImageCropper = false
+                            selectedItem = nil
+                            selectedImageData = nil
+                            tempImageForCropping = nil
+                        }
+                    )
+                }
+            }
             .onAppear {
                 loadUserData()
             }
-            // Fotoğraf seçilince veriye dönüştür
             .onChange(of: selectedItem) { oldValue, newItem in
                 Task {
-                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                    if let data = try? await newItem?.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data) {
                         selectedImageData = data
+                        tempImageForCropping = uiImage
+                        showImageCropper = true
+                        
+
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 saniye
+                            selectedItem = nil
+                        }
                     }
                 }
             }
+            .onChange(of: phone) { oldValue, newValue in
+                validatePhoneNumber()
+            }
         }
+        .navigationBarHidden(true)
     }
     
-    // FONKSİYONLAR
+    // MARK: - Functions
     
     func loadUserData() {
         if let user = authViewModel.currentUser {
             fullname = user.fullName
+            username = user.username
             bio = user.bio ?? ""
             website = user.website ?? ""
             phone = user.phoneNumber ?? ""
         }
     }
     
+    func validatePhoneNumber() {
+        phoneValidationError = ValidationHelper.validatePhoneNumber(phone)
+    }
+    
     func saveProfileChanges() {
-        // BURADA:
-        // 1. Eğer 'selectedImageData' varsa önce Firebase Storage'a yükle -> URL al.
-        // 2. Yeni URL ve Text bilgilerini Firestore'da güncelle.
+        // Final validation
+        validatePhoneNumber()
         
-        // Şimdilik sadece Text güncelleme simülasyonu yapıyoruz (UI Testi için):
-        if var user = authViewModel.currentUser {
-            user.fullName = fullname
-            user.bio = bio
-            user.website = website
-            user.phoneNumber = phone
-            
-            // ViewModel'deki veriyi güncelle (Anlık görmek için)
-            authViewModel.currentUser = user
+        if phoneValidationError != nil {
+            return
         }
         
-        dismiss()
+        isSaving = true
+        
+        authViewModel.updateUserProfile(
+            fullName: fullname,
+            username: username.isEmpty ? nil : username,
+            bio: bio.isEmpty ? nil : bio,
+            website: website.isEmpty ? nil : website,
+            phoneNumber: phone.isEmpty ? nil : phone,
+            profileImage: croppedImage
+        ) { success, error in
+            isSaving = false
+            
+            if success {
+                withAnimation {
+                    showSuccessMessage = true
+                }
+                
+                // Auto-dismiss after showing success
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    dismiss()
+                }
+            } else {
+                // Error is already set in authViewModel.errorMessage
+                print("DEBUG: Profile update failed - \(error ?? "Unknown error")")
+            }
+        }
     }
 }
 
@@ -142,6 +228,7 @@ struct EditProfileField: View {
     let title: String
     @Binding var text: String
     var isMultiLine: Bool = false
+    var validationError: String? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -153,18 +240,26 @@ struct EditProfileField: View {
                 TextEditor(text: $text)
                     .frame(height: 100)
                     .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(.white) // YAZI RENGİ BEYAZ
+                    .foregroundColor(.white)
                     .padding(10)
                     .background(Color("CardDark"))
                     .cornerRadius(12)
-                    .scrollContentBackground(.hidden) // TextEditor gri arka planını kaldırır
+                    .scrollContentBackground(.hidden)
             } else {
                 TextField("", text: $text)
                     .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(.white) // YAZI RENGİ BEYAZ
+                    .foregroundColor(.white)
                     .padding()
                     .background(Color("CardDark"))
                     .cornerRadius(12)
+            }
+            
+            // Validation error
+            if let error = validationError {
+                Text(error)
+                    .font(.custom("Poppins-Regular", size: 12))
+                    .foregroundColor(.red)
+                    .padding(.leading, 4)
             }
         }
     }
@@ -189,11 +284,14 @@ extension EditProfileView {
                 
                 Spacer()
                 
-                Button("Save") {
+                Button(isSaving ? "Saving..." : "Save") {
                     saveProfileChanges()
                 }
+                .disabled(isSaving || phoneValidationError != nil)
                 .font(.custom("Poppins-Bold", size: 16))
-                .foregroundColor(Color("BrandPurple"))
+                .foregroundColor(
+                    (isSaving || phoneValidationError != nil) ? .gray : Color("BrandPurple")
+                )
                 .padding(12)
                 .background(Color("CardDark"))
                 .cornerRadius(20)
